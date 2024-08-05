@@ -23,7 +23,7 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
     {
         MINT_CAP = mint_cap;
         _setupRole(ADMIN_ROLE, msg.sender);
-        _mint(reciever, amount ** decimals());
+        _mint(reciever, amount * decimals());
     }
 
     function mint(address to, uint256 amount) public onlyRole(MINTER_ROLE) {

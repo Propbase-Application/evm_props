@@ -9,7 +9,7 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
   const args = [
     1200000000,
     "0xaE51A9C50a524cEeBF2393f7c211Ed86c5B13c33",
-    1000000 * (10 ^ 8),
+    10000000,
   ];
   const props = await deploy("PROPS", {
     from: deployer,
