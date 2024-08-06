@@ -81,10 +81,10 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
     }
 
     function mint(address to, uint256 amount) public onlyRole(MINTER_ROLE) checkTrancheLimit(amount, mint_tranche_cap) checkDelay(last_mint_timestamp, mint_delay) {
-        current_supply += amount;
         if(current_supply > MINT_CAP){
             revert PROPS__MintCapReached(MINT_CAP);
         }
+        current_supply += amount;
         last_mint_timestamp = block.timestamp;
         _mint(to, amount);
     }
