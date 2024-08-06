@@ -11,6 +11,7 @@ error PROPS__MintCapReached(uint256 limit);
 error PROPS__AddressNotMultiSign();
 error PROPS__AmountTrancheCapReached();
 error PROPS__BurnAmountNotAvailable();
+error PROPS__MinDelayForFunctionCallNotReached(uint256 current_timestamp, uint256 unlock_timestamp);
 
 contract PROPS is ERC20, ERC20Burnable, AccessControl {
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
@@ -18,14 +19,20 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
     uint256 public immutable MINT_CAP;
     string public _iconURI;
-    uint256 current_supply = 0;
-    uint256 mint_tranche_cap = 0;
-    uint256 burn_tranche_cap = 0;
+    uint256 public current_supply = 0;
+    uint256 public mint_tranche_cap = 0;
+    uint256 public burn_tranche_cap = 0;
+    uint256 public mint_delay = 0;
+    uint256 public burn_delay = 0;
+    uint256 public last_mint_timestamp = 0;
+    uint256 public last_burn_timestamp = 0;
 
     constructor(
         uint256 mint_cap,
         uint256 mint_tranche,
         uint256 burn_tranche,
+        uint256 mint_period,
+        uint256 burn_period,
         string memory icon_uri
     )
         ERC20("PROPS", "PROPS")
@@ -34,6 +41,8 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
         _iconURI = icon_uri;
         mint_tranche_cap = mint_tranche;
         burn_tranche_cap = burn_tranche;
+        mint_delay = mint_period;
+        burn_delay = burn_period;
         _setupRole(ADMIN_ROLE, msg.sender);
     }
 
@@ -58,19 +67,29 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
         _;
     }
 
-    function mint(address to, uint256 amount) public onlyRole(MINTER_ROLE) checkTrancheLimit(amount, mint_tranche_cap) {
+    modifier checkDelay(uint256 last_timestamp, uint256 min_delay){
+        uint256 current_timestamp  = block.timestamp;
+        if(current_timestamp <= last_timestamp + min_delay){
+            revert PROPS__MinDelayForFunctionCallNotReached(current_timestamp, last_timestamp + min_delay); 
+        }
+        _;
+    }
+
+    function mint(address to, uint256 amount) public onlyRole(MINTER_ROLE) checkTrancheLimit(amount, mint_tranche_cap) checkDelay(last_mint_timestamp, mint_delay) {
         current_supply += amount;
         if(current_supply > MINT_CAP){
             revert PROPS__MintCapReached(MINT_CAP);
         }
+        last_mint_timestamp = block.timestamp;
         _mint(to, amount);
     }
 
-    function burn(address to, uint256 amount) public onlyRole(BURNER_ROLE) checkTrancheLimit(amount, burn_tranche_cap) {
+    function burn(address to, uint256 amount) public onlyRole(BURNER_ROLE) checkTrancheLimit(amount, burn_tranche_cap) checkDelay(last_burn_timestamp, burn_delay) {
         if(current_supply < amount){
             revert PROPS__BurnAmountNotAvailable(); 
         }
         current_supply -= amount;
+        last_burn_timestamp = block.timestamp;
         _burn(to, amount);
     }
 
@@ -78,17 +97,29 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
         return 8;
     }
 
+    function revokeAdmin(address admin) external onlyRole(ADMIN_ROLE) isValidAddress(admin) {
+        _revokeRole(ADMIN_ROLE, admin);   
+    }
+
     function setupAdmin(address admin) external onlyRole(ADMIN_ROLE) isValidAddress(admin) isMultisignAddress(admin) {
-        _setupRole(ADMIN_ROLE, admin);   
+        _grantRole(ADMIN_ROLE, admin);   
     }
 
     function setupMinter(address minter, bool enabled) external onlyRole(ADMIN_ROLE) isValidAddress(minter) isMultisignAddress(minter) {
-        if (enabled) _setupRole(MINTER_ROLE, minter);
+        if (enabled) _grantRole(MINTER_ROLE, minter);
         else _revokeRole(MINTER_ROLE, minter);   
     }
 
     function setupBurner(address burner, bool enabled) external onlyRole(ADMIN_ROLE) isValidAddress(burner) isMultisignAddress(burner) {
-        if (enabled) _setupRole(BURNER_ROLE, burner);
+        if (enabled) _grantRole(BURNER_ROLE, burner);
         else _revokeRole(BURNER_ROLE, burner);   
+    }  
+
+    function setMintTrancheCap(uint256 limit) external onlyRole(MINTER_ROLE) {
+       mint_tranche_cap = limit;
+    }  
+
+    function setBurnTrancheCap(uint256 limit) external onlyRole(BURNER_ROLE) {
+       burn_tranche_cap = limit;
     }  
 }
