@@ -27,6 +27,8 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
     uint256 public burn_delay = 0;
     uint256 public last_mint_timestamp = 0;
     uint256 public last_burn_timestamp = 0;
+    uint256 public last_mint_tranche_timestamp = 0;
+    uint256 public last_burn_tranche_timestamp = 0;
     uint256 private constant MAX_BURN_TRANCHE_CAP = 1000000000000;
     uint256 private constant MAX_MINT_TRANCHE_CAP = 1000000000000;
 
@@ -118,17 +120,19 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
         else _revokeRole(BURNER_ROLE, burner);   
     }  
 
-    function setMintTrancheCap(uint256 limit) external onlyRole(MINTER_ROLE) {
+    function setMintTrancheCap(uint256 limit) external onlyRole(MINTER_ROLE) checkDelay(last_mint_tranche_timestamp, mint_delay) {
         if(limit > MINT_CAP || limit > MAX_MINT_TRANCHE_CAP ){
             revert PROPS__BurnTrancheCapOutOfRange();
         }
+        last_mint_tranche_timestamp = block.timestamp;
         mint_tranche_cap = limit;
     }  
 
-    function setBurnTrancheCap(uint256 limit) external onlyRole(BURNER_ROLE) {
+    function setBurnTrancheCap(uint256 limit) external onlyRole(BURNER_ROLE) checkDelay(last_burn_tranche_timestamp, burn_delay) {
         if(limit > MINT_CAP || limit > MAX_BURN_TRANCHE_CAP){
             revert PROPS__BurnTrancheCapOutOfRange();
         }
+        last_burn_tranche_timestamp = block.timestamp;
         burn_tranche_cap = limit;
     }  
 }
