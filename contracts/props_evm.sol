@@ -11,7 +11,8 @@ error PROPS__MintCapReached(uint256 limit);
 error PROPS__AddressNotMultiSign();
 error PROPS__AmountTrancheCapReached();
 error PROPS__BurnAmountNotAvailable();
-error PROPS__MinDelayForFunctionCallNotReached(uint256 current_timestamp, uint256 unlock_timestamp);
+error PROPS__FrequencyTimeLimitNotReached(uint256 current_timestamp, uint256 unlock_timestamp);
+error PROPS__BurnTrancheCapOutOfRange();
 
 contract PROPS is ERC20, ERC20Burnable, AccessControl {
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
@@ -26,6 +27,8 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
     uint256 public burn_delay = 0;
     uint256 public last_mint_timestamp = 0;
     uint256 public last_burn_timestamp = 0;
+    uint256 private constant MAX_BURN_TRANCHE_CAP = 1000000000000;
+    uint256 private constant MAX_MINT_TRANCHE_CAP = 1000000000000;
 
     constructor(
         uint256 mint_cap,
@@ -70,7 +73,7 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
     modifier checkDelay(uint256 last_timestamp, uint256 min_delay){
         uint256 current_timestamp  = block.timestamp;
         if(current_timestamp <= last_timestamp + min_delay){
-            revert PROPS__MinDelayForFunctionCallNotReached(current_timestamp, last_timestamp + min_delay); 
+            revert PROPS__FrequencyTimeLimitNotReached(current_timestamp, last_timestamp + min_delay); 
         }
         _;
     }
@@ -116,10 +119,16 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
     }  
 
     function setMintTrancheCap(uint256 limit) external onlyRole(MINTER_ROLE) {
-       mint_tranche_cap = limit;
+        if(limit > MINT_CAP || limit > MAX_MINT_TRANCHE_CAP ){
+            revert PROPS__BurnTrancheCapOutOfRange();
+        }
+        mint_tranche_cap = limit;
     }  
 
     function setBurnTrancheCap(uint256 limit) external onlyRole(BURNER_ROLE) {
-       burn_tranche_cap = limit;
+        if(limit > MINT_CAP || limit > MAX_BURN_TRANCHE_CAP){
+            revert PROPS__BurnTrancheCapOutOfRange();
+        }
+        burn_tranche_cap = limit;
     }  
 }
