@@ -13,6 +13,7 @@ error PROPS__AmountTrancheCapReached();
 error PROPS__BurnAmountNotAvailable();
 error PROPS__FrequencyTimeLimitNotReached(uint256 current_timestamp, uint256 unlock_timestamp);
 error PROPS__BurnTrancheCapOutOfRange();
+error PROPS__MintTrancheCapOutOfRange();
 
 contract PROPS is ERC20, ERC20Burnable, AccessControl {
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
@@ -29,8 +30,8 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
     uint256 public last_burn_timestamp = 0;
     uint256 public last_mint_tranche_timestamp = 0;
     uint256 public last_burn_tranche_timestamp = 0;
-    uint256 private constant MAX_BURN_TRANCHE_CAP = 1000000000000;
-    uint256 private constant MAX_MINT_TRANCHE_CAP = 1000000000000;
+    uint256 private constant MAX_BURN_TRANCHE_CAP = 1000000000000000;
+    uint256 private constant MAX_MINT_TRANCHE_CAP = 1000000000000000;
 
     constructor(
         uint256 mint_cap,
@@ -81,7 +82,7 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
     }
 
     function mint(address to, uint256 amount) public onlyRole(MINTER_ROLE) checkTrancheLimit(amount, mint_tranche_cap) checkDelay(last_mint_timestamp, mint_delay) {
-        if(current_supply > MINT_CAP){
+        if(current_supply + amount > MINT_CAP){
             revert PROPS__MintCapReached(MINT_CAP);
         }
         current_supply += amount;
@@ -122,7 +123,7 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
 
     function setMintTrancheCap(uint256 limit) external onlyRole(MINTER_ROLE) checkDelay(last_mint_tranche_timestamp, mint_delay) {
         if(limit > MINT_CAP || limit > MAX_MINT_TRANCHE_CAP ){
-            revert PROPS__BurnTrancheCapOutOfRange();
+            revert PROPS__MintTrancheCapOutOfRange();
         }
         last_mint_tranche_timestamp = block.timestamp;
         mint_tranche_cap = limit;
@@ -135,4 +136,9 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
         last_burn_tranche_timestamp = block.timestamp;
         burn_tranche_cap = limit;
     }  
+
+    //view functions
+    function getCoinConfig() external view returns(uint256, uint256, uint256, uint256, uint256, string memory){
+        return (MINT_CAP, mint_tranche_cap, burn_tranche_cap, mint_delay, burn_delay, _iconURI);
+    }
 }
