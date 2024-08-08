@@ -3,7 +3,7 @@
 const { assert, expect } = require("chai");
 const { deployments, ethers, getNamedAccounts } = require("hardhat");
 const { developmentChains } = require("../helper-hardhat-config");
-
+const { time } = require("@nomicfoundation/hardhat-network-helpers");
 //writing the test code from here..
 
 !developmentChains.includes(network.name)
@@ -55,6 +55,15 @@ const { developmentChains } = require("../helper-hardhat-config");
             assert(hasRole);
           });
 
+          it("emit AdminSetup correctly.", async () => {
+            let test_address = await test.getAddress();
+            const timestamp = await time.latest();
+
+            await expect(props.connect(deployer).setupAdmin(test_address))
+              .to.emit(props, "AdminSetup")
+              .withArgs(test_address, timestamp + 1);
+          });
+
           it("only admin can setupAdmins.", async () => {
             let test_address = await test.getAddress();
             await expect(
@@ -82,7 +91,6 @@ const { developmentChains } = require("../helper-hardhat-config");
           });
 
           it("Revokes admin correctly.", async () => {
-            let test_address = await test.getAddress();
             await props.connect(deployer).revokeAdmin(deployer.address);
             let hasRole = await props
               .connect(deployer)
@@ -91,6 +99,13 @@ const { developmentChains } = require("../helper-hardhat-config");
                 deployer.address
               );
             assert(!hasRole);
+          });
+
+          it("Emits AdminRevoked correctly on revoke admin.", async () => {
+            const timestamp = await time.latest();
+            await expect(props.connect(deployer).revokeAdmin(deployer.address))
+              .to.emit(props, "AdminRevoked")
+              .withArgs(deployer.address, timestamp + 1);
           });
 
           it("Revokes admin can't set zero address.", async () => {
@@ -111,6 +126,16 @@ const { developmentChains } = require("../helper-hardhat-config");
                 test_address
               );
             assert(hasRole);
+          });
+
+          it("Emits MinterSetup on minter correctly.", async () => {
+            const timestamp = await time.latest();
+            let test_address = await test.getAddress();
+            await expect(
+              props.connect(deployer).setupMinter(test_address, true)
+            )
+              .to.emit(props, "MinterSetup")
+              .withArgs(test_address, timestamp + 1);
           });
 
           it("Unsets minter correctly.", async () => {
@@ -173,6 +198,16 @@ const { developmentChains } = require("../helper-hardhat-config");
             assert(hasRole);
           });
 
+          it("Emits BurnerSetup on set burner correctly.", async () => {
+            const timestamp = await time.latest();
+            let test_address = await test.getAddress();
+            await expect(
+              props.connect(deployer).setupBurner(test_address, true)
+            )
+              .to.emit(props, "BurnerSetup")
+              .withArgs(test_address, timestamp + 1);
+          });
+
           it("Unsets burner correctly.", async () => {
             let test_address = await test.getAddress();
             await props.connect(deployer).setupBurner(test_address, true);
@@ -230,6 +265,19 @@ const { developmentChains } = require("../helper-hardhat-config");
 
             const data = await props.getCoinConfig();
             assert.equal(data[1], ethers.toBigInt("500000000"));
+          });
+
+          it("Emits MintTrancheCapSetup on MintTrancheCap correctly.", async () => {
+            let test_address = await test.getAddress();
+            await props.connect(deployer).setupMinter(test_address, true);
+            const timestamp = await time.latest();
+            await expect(
+              test
+                .connect(deployer)
+                .setMintTrancheCap(ethers.parseUnits("5", 8))
+            )
+              .to.emit(props, "MintTrancheCapSetup")
+              .withArgs(test_address, ethers.parseUnits("5", 8), timestamp + 1);
           });
 
           it("only minter role can set MintTrancheCap ", async () => {
@@ -323,6 +371,19 @@ const { developmentChains } = require("../helper-hardhat-config");
             assert.equal(data[2], ethers.toBigInt("500000000"));
           });
 
+          it("Emits  BurnTrancheCap correctly.", async () => {
+            let test_address = await test.getAddress();
+            await props.connect(deployer).setupBurner(test_address, true);
+            const timestamp = await time.latest();
+            await expect(
+              test
+                .connect(deployer)
+                .setBurnTrancheCap(ethers.parseUnits("5", 8))
+            )
+              .to.emit(props, "BurnTrancheCapSetup")
+              .withArgs(test_address, ethers.parseUnits("5", 8), timestamp + 1);
+          });
+
           it("only burner role can set MintTrancheCap ", async () => {
             let test_address = await test.getAddress();
             await props.connect(deployer).setupBurner(test_address, true);
@@ -387,7 +448,7 @@ const { developmentChains } = require("../helper-hardhat-config");
           it("can't set BurnTrancheCap multiple times without burn_delay", async () => {
             let test_address = await test.getAddress();
             await props.connect(deployer).setupBurner(test_address, true);
-            test
+            await test
               .connect(deployer)
               .setBurnTrancheCap(ethers.parseUnits("10000000", 8));
 
