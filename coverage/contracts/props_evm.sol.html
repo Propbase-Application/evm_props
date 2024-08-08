@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Code coverage report for contracts/props_evm.sol</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../prettify.css" />
+    <link rel="stylesheet" href="../base.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+<body>
+<div class='wrapper'>
+  <div class='pad1'>
+    <h1>
+      <a href="../index.html">all files</a> / <a href="index.html">contracts/</a> props_evm.sol
+    </h1>
+    <div class='clearfix'>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">95.45% </span>
+        <span class="quiet">Statements</span>
+        <span class='fraction'>21/22</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">98.48% </span>
+        <span class="quiet">Branches</span>
+        <span class='fraction'>65/66</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">93.33% </span>
+        <span class="quiet">Functions</span>
+        <span class='fraction'>14/15</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">97.73% </span>
+        <span class="quiet">Lines</span>
+        <span class='fraction'>43/44</span>
+      </div>
+    </div>
+  </div>
+  <div class='status-line high'></div>
+<pre><table class="coverage">
+<tr><td class="line-count quiet">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">39×</span>
+<span class="cline-any cline-yes">39×</span>
+<span class="cline-any cline-yes">39×</span>
+<span class="cline-any cline-yes">39×</span>
+<span class="cline-any cline-yes">39×</span>
+<span class="cline-any cline-yes">39×</span>
+<span class="cline-any cline-yes">39×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">41×</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">37×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">36×</span>
+<span class="cline-any cline-yes">3×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">33×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">134×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">132×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">148×</span>
+<span class="cline-any cline-yes">148×</span>
+<span class="cline-any cline-yes">6×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">142×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">127×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">126×</span>
+<span class="cline-any cline-yes">126×</span>
+<span class="cline-any cline-yes">126×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">19×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">13×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// SPDX-License-Identifier: MIT
+// Compatible with OpenZeppelin Contracts ^5.0.0
+pragma solidity ^0.8.20;
+&nbsp;
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
+&nbsp;
+error PROPS__InvalidAddress();
+error PROPS__MintCapReached(uint256 limit);
+error PROPS__AddressNotMultiSign();
+error PROPS__AmountTrancheCapReached();
+error PROPS__BurnAmountNotAvailable();
+error PROPS__FrequencyTimeLimitNotReached(uint256 current_timestamp, uint256 unlock_timestamp);
+error PROPS__BurnTrancheCapOutOfRange();
+error PROPS__MintTrancheCapOutOfRange();
+&nbsp;
+contract PROPS is ERC20, ERC20Burnable, AccessControl {
+    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+    bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
+    uint256 public immutable MINT_CAP;
+    string public _iconURI;
+    uint256 public current_supply = 0;
+    uint256 public mint_tranche_cap = 0;
+    uint256 public burn_tranche_cap = 0;
+    uint256 public mint_delay = 0;
+    uint256 public burn_delay = 0;
+    uint256 public last_mint_timestamp = 0;
+    uint256 public last_burn_timestamp = 0;
+    uint256 public last_mint_tranche_timestamp = 0;
+    uint256 public last_burn_tranche_timestamp = 0;
+    uint256 private constant MAX_BURN_TRANCHE_CAP = 1000000000000000;
+    uint256 private constant MAX_MINT_TRANCHE_CAP = 1000000000000000;
+&nbsp;
+    constructor(
+        uint256 mint_cap,
+        uint256 mint_tranche,
+        uint256 burn_tranche,
+        uint256 mint_period,
+        uint256 burn_period,
+        string memory icon_uri
+    )
+        ERC20("PROPS", "PROPS")
+    {
+        MINT_CAP = mint_cap;
+        _iconURI = icon_uri;
+        mint_tranche_cap = mint_tranche;
+        burn_tranche_cap = burn_tranche;
+        mint_delay = mint_period;
+        burn_delay = burn_period;
+        _setupRole(ADMIN_ROLE, msg.sender);
+    }
+&nbsp;
+    modifier isValidAddress(address to){
+        if(to == address(0)){
+            revert PROPS__InvalidAddress(); 
+        }
+        _;
+    }
+&nbsp;
+    modifier isMultisignAddress(address to){
+        if(to.code.length == 0){
+            revert PROPS__AddressNotMultiSign(); 
+        }
+        _;
+    }
+&nbsp;
+    modifier checkTrancheLimit(uint256 amount, uint256 limit_cap){
+        if(amount &gt; limit_cap){
+            revert PROPS__AmountTrancheCapReached(); 
+        }
+        _;
+    }
+&nbsp;
+    modifier checkDelay(uint256 last_timestamp, uint256 min_delay){
+        uint256 current_timestamp  = block.timestamp;
+        if(current_timestamp &lt;= last_timestamp + min_delay){
+            revert PROPS__FrequencyTimeLimitNotReached(current_timestamp, last_timestamp + min_delay); 
+        }
+        _;
+    }
+&nbsp;
+    function mint(address to, uint256 amount) public onlyRole(MINTER_ROLE) checkTrancheLimit(amount, mint_tranche_cap) checkDelay(last_mint_timestamp, mint_delay) {
+        if(current_supply + amount &gt; MINT_CAP){
+            revert PROPS__MintCapReached(MINT_CAP);
+        }
+        current_supply += amount;
+        last_mint_timestamp = block.timestamp;
+        _mint(to, amount);
+    }
+&nbsp;
+    function burn(address to, uint256 amount) public onlyRole(BURNER_ROLE) checkTrancheLimit(amount, burn_tranche_cap) checkDelay(last_burn_timestamp, burn_delay) {
+        if(current_supply &lt; amount){
+            revert PROPS__BurnAmountNotAvailable(); 
+        }
+        current_supply -= amount;
+        last_burn_timestamp = block.timestamp;
+        _burn(to, amount);
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function decimals() public override view virtual returns (uint8) {</span>
+<span class="cstat-no" title="statement not covered" >        return 8;</span>
+    }
+&nbsp;
+    function revokeAdmin(address admin) external <span class="missing-if-branch" title="else path not taken" >E</span>onlyRole(ADMIN_ROLE) isValidAddress(admin) {
+        _revokeRole(ADMIN_ROLE, admin);   
+    }
+&nbsp;
+    function setupAdmin(address admin) external onlyRole(ADMIN_ROLE) isValidAddress(admin) isMultisignAddress(admin) {
+        _grantRole(ADMIN_ROLE, admin);   
+    }
+&nbsp;
+    function setupMinter(address minter, bool enabled) external onlyRole(ADMIN_ROLE) isValidAddress(minter) isMultisignAddress(minter) {
+        if (enabled) _grantRole(MINTER_ROLE, minter);
+        else _revokeRole(MINTER_ROLE, minter);   
+    }
+&nbsp;
+    function setupBurner(address burner, bool enabled) external onlyRole(ADMIN_ROLE) isValidAddress(burner) isMultisignAddress(burner) {
+        if (enabled) _grantRole(BURNER_ROLE, burner);
+        else _revokeRole(BURNER_ROLE, burner);   
+    }  
+&nbsp;
+    function setMintTrancheCap(uint256 limit) external onlyRole(MINTER_ROLE) checkDelay(last_mint_tranche_timestamp, mint_delay) {
+        if(limit &gt; MINT_CAP || limit &gt; MAX_MINT_TRANCHE_CAP ){
+            revert PROPS__MintTrancheCapOutOfRange();
+        }
+        last_mint_tranche_timestamp = block.timestamp;
+        mint_tranche_cap = limit;
+    }  
+&nbsp;
+    function setBurnTrancheCap(uint256 limit) external onlyRole(BURNER_ROLE) checkDelay(last_burn_tranche_timestamp, burn_delay) {
+        if(limit &gt; MINT_CAP || limit &gt; MAX_BURN_TRANCHE_CAP){
+            revert PROPS__BurnTrancheCapOutOfRange();
+        }
+        last_burn_tranche_timestamp = block.timestamp;
+        burn_tranche_cap = limit;
+    }  
+&nbsp;
+    //view functions
+    function getCoinConfig() external view returns(uint256, uint256, uint256, uint256, uint256, string memory){
+        return (MINT_CAP, mint_tranche_cap, burn_tranche_cap, mint_delay, burn_delay, _iconURI);
+    }
+}</pre></td></tr>
+</table></pre>
+<div class='push'></div><!-- for sticky footer -->
+</div><!-- /wrapper -->
+<div class='footer quiet pad2 space-top1 center small'>
+  Code coverage
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Thu Aug 08 2024 10:11:32 GMT+0530 (India Standard Time)
+</div>
+</div>
+<script src="../prettify.js"></script>
+<script>
+window.onload = function () {
+        if (typeof prettyPrint === 'function') {
+            prettyPrint();
+        }
+};
+</script>
+<script src="../sorter.js"></script>
+</body>
+</html>

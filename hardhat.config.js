@@ -3,6 +3,9 @@ require("dotenv").config();
 require("hardhat-contract-sizer");
 require("hardhat-deploy");
 require("@nomicfoundation/hardhat-verify");
+require("solidity-coverage");
+require("hardhat-gas-reporter");
+
 /** @type import('hardhat/config').HardhatUserConfig */
 const GORELLI_RPC_URL = process.env.GORELLI_RPC_URL;
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
@@ -98,7 +101,7 @@ module.exports = {
     noColors: true,
     currency: "USD",
     coinmarketcap: COIN_MARKET_CAP_API_KEY,
-    token: "MATIC",
+    token: "ETH",
   },
   mocha: {
     timeout: 400000,
