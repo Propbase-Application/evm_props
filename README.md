@@ -12,8 +12,8 @@ SEPOLIA_RPC_URL="SEPOLIA_NETWORK_RPC_URL"//optional
 PRIVATE_KEY="YOUR_PRIVATE_KEY //
 ETHERSCAN_API_KEY="ETHERSCAN_API_KEY" //optional for validating contract
 COIN_MARKET_CAP_API_KEY="COIN_MARKET_API_KEY"//optional
-POLYGON_API_KEY="P44QQFSSFS8T7FE5Y5VPAFHDX6QXF5T6C4"//optional for validating contract
-BNB_SCAN_API_KEY="DFSF2C5QWJ2F4KVXADFSZDTRBC4WB2UM8J"//optional for validating contract
+POLYGON_API_KEY="POLYGON_NETWORK_API_KEY"//optional for validating contract
+BNB_SCAN_API_KEY="BNB_SCAN_API_KEY"//optional for validating contract
 ```
 
 ## Initializing commands:
