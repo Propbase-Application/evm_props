@@ -7,14 +7,11 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
   const { deployer } = await getNamedAccounts();
   const chainId = network.config.chainId;
   const args = [
-    ethers.parseUnits("1200000000", 8),
-    1000000000000,
-    500000000000,
-    86400,
-    86400,
+    "0x7a3E02bd3dD83b711515DaE84B63dB04f8750dA0",
+    700000000000000,
     "www.icon.com",
   ];
-  const props = await deploy("PROPS", {
+  const props = await deploy("TEST_PROPS", {
     from: deployer,
     args: args,
     log: true,
