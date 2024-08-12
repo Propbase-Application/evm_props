@@ -14,6 +14,8 @@ const POLYGON_API_KEY = process.env.POLYGON_API_KEY;
 const COIN_MARKET_CAP_API_KEY = process.env.COIN_MARKET_CAP_API_KEY;
 const SEPOLIA_RPC_URL = process.env.SEPOLIA_RPC_URL;
 const BNB_SCAN_API_KEY = process.env.BNB_SCAN_API_KEY;
+const BASE_SEPOLIA_API_KEY = process.env.BASE_SEPOLIA_API_KEY;
+
 module.exports = {
   defaultNetwork: "hardhat",
   networks: {
@@ -43,6 +45,12 @@ module.exports = {
     bscTestnet: {
       url: "https://data-seed-prebsc-1-s1.bnbchain.org:8545",
       chainId: 97,
+      gasPrice: 20000000000,
+      accounts: [PRIVATE_KEY],
+    },
+    baseSepolia: {
+      url: "https://sepolia.base.org",
+      chainId: 84532,
       gasPrice: 20000000000,
       accounts: [PRIVATE_KEY],
     },
@@ -92,6 +100,7 @@ module.exports = {
       polygonMumbai: POLYGON_API_KEY,
       sepolia: API_KEY,
       bscTestnet: BNB_SCAN_API_KEY,
+      baseSepolia: BASE_SEPOLIA_API_KEY,
     },
     customChains: [],
   },

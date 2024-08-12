@@ -6,3 +6,4 @@ deployments
 gas-report.txt
 coverage.json
 coverage
+.solhint.json
