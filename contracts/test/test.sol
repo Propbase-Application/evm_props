@@ -15,15 +15,8 @@ contract TEST {
         props_coin.setMintTrancheCap(amount);
     }
 
-    function setBurnTrancheCap(uint256 amount) public  {
-        props_coin.setBurnTrancheCap(amount);
-    }
-
     function mint(address to, uint256 amount) public  {
         props_coin.mint(to, amount);
     }
 
-    function burn(address to, uint256 amount) public  {
-        props_coin.burn(to, amount);
-    }
 }
