@@ -35,9 +35,10 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
     //events
     event PropsMinted(address indexed receiver, uint256 amount, uint256 timestamp);
     event PropsBurned(address indexed from, uint256 amount, uint256 timestamp);
-    event UserRevoked(address indexed user, uint256 timestamp);
+    event AdminRevoked(address indexed admin, uint256 timestamp);
     event AdminSetup(address indexed new_admin, uint256 timestamp);
     event MinterSetup(address indexed new_minter, uint256 timestamp);
+    event ParameterAdminRoleSetup(address indexed new_parameter_admin, uint256 timestamp);
     event MintTrancheCapSetup(address indexed minter, uint256 new_mint_tranche_cap, uint256 timestamp);
 
     // constructor setting intial configurations
@@ -88,7 +89,7 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
     }
 
     /// @notice Mints the specific "amount"" of tokens to "to" address.
-    /// @dev Only MINTER_ROLE user can mint that to in specific delays and mint tranche limits per transactiion.
+    /// @dev Only MINTER_ROLE user can mint that to in specific delays and mint tranche limits per transaction.
     /// @param to receiver address of $PROPS
     /// @param amount receiver amount $PROPS
     function mint(address to,uint256 amount)
@@ -112,11 +113,11 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
     /// @notice Revokes ADMIN_ROLE.
     /// @dev Only ADMIN_ROLE user can revoke ADMIN_ROLE.
     /// @param user ADMIN_ROLE user to be revoked ADMIN_ROLE
-    function revokeUser(bytes32 role, address user) 
+    function revokeAdmin(bytes32 role, address user) 
     external onlyRole(ADMIN_ROLE) isValidAddress(user) {
         _revokeRole(role, user);
 
-        emit UserRevoked(user, block.timestamp);
+        emit AdminRevoked(user, block.timestamp);
     }
 
     /// @notice sets ADMIN_ROLE.
@@ -142,13 +143,25 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
         emit MinterSetup(minter, block.timestamp);
     }
 
+    /// @notice sets MINTER_ROLE.
+    /// @dev Only ADMIN_ROLE user can set PARAMETER_ADMIN_ROLE and address should be Multisign.
+    /// @param parameter_admin new PARAMETER_ADMIN_ROLE user.
+    /// @param enabled boolean specifying whether to set or unset PARAMETER_ADMIN_ROLE.
+    function setupParameterAdmin(address parameter_admin, bool enabled)
+    external onlyRole(ADMIN_ROLE) isValidAddress(parameter_admin) isMultisignAddress(parameter_admin){
+        if (enabled) _grantRole(PARAMETER_ADMIN_ROLE, parameter_admin);
+        else _revokeRole(PARAMETER_ADMIN_ROLE, parameter_admin);
+
+        emit ParameterAdminRoleSetup(parameter_admin, block.timestamp);
+    }
+
     /**
      * @notice sets MintTrancheCap.
      * @dev Only MINTER_ROLE user can set MintTrancheCap and limit should be less than max mint tranche cap that to in specific delays.
      * @param limit new MintTrancheCap limit.
      */
     function setMintTrancheCap(uint256 limit)
-    external onlyRole(MINTER_ROLE) checkDelay(last_mint_tranche_timestamp, MINT_DELAY){
+    external onlyRole(PARAMETER_ADMIN_ROLE) checkDelay(last_mint_tranche_timestamp, MINT_DELAY){
         if (limit > MINT_CAP || limit > MAX_MINT_TRANCHE_CAP) {
             revert PROPS__MintTrancheCapOutOfRange();
         }
