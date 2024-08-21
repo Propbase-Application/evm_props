@@ -21,11 +21,7 @@ const { time } = require("@nomicfoundation/hardhat-network-helpers");
         const Props = await ethers.getContractFactory("PROPS");
         const Test = await ethers.getContractFactory("TEST");
         props = await Props.deploy(
-          ethers.parseUnits("1200000000", 8),
-          1000000000000,
-          500000000000,
-          86400,
-          86400,
+          ethers.parseUnits("1000000", 8),
           "www.icon.com"
         );
         let props_address = await props.getAddress();
@@ -35,11 +31,9 @@ const { time } = require("@nomicfoundation/hardhat-network-helpers");
         it("Initializes the PROPS Correctly.", async () => {
           const data = await props.getCoinConfig();
           assert.equal(data[0], ethers.parseUnits("1200000000", 8));
-          assert.equal(data[1], ethers.toBigInt("1000000000000"));
-          assert.equal(data[2], ethers.toBigInt("500000000000"));
-          assert.equal(data[3], ethers.toBigInt("86400"));
-          assert.equal(data[4], ethers.toBigInt("86400"));
-          assert.equal(data[5], "www.icon.com");
+          assert.equal(data[1], ethers.toBigInt("100000000000000"));
+          assert.equal(data[2], ethers.toBigInt("172800"));
+          assert.equal(data[3], "www.icon.com");
         });
 
         describe("Admin Functionality Test", function () {
@@ -91,7 +85,7 @@ const { time } = require("@nomicfoundation/hardhat-network-helpers");
           });
 
           it("Revokes admin correctly.", async () => {
-            await props.connect(deployer).revokeAdmin(deployer.address);
+            await props.connect(deployer).revokeAdmin(ethers.keccak256(ethers.toUtf8Bytes("ADMIN_ROLE")), deployer.address);
             let hasRole = await props
               .connect(deployer)
               .hasRole(
@@ -103,15 +97,85 @@ const { time } = require("@nomicfoundation/hardhat-network-helpers");
 
           it("Emits AdminRevoked correctly on revoke admin.", async () => {
             const timestamp = await time.latest();
-            await expect(props.connect(deployer).revokeAdmin(deployer.address))
+            await expect(props.connect(deployer).revokeAdmin(ethers.keccak256(ethers.toUtf8Bytes("ADMIN_ROLE")), deployer.address))
               .to.emit(props, "AdminRevoked")
               .withArgs(deployer.address, timestamp + 1);
           });
 
           it("Revokes admin can't set zero address.", async () => {
             await expect(
-              props.connect(deployer).revokeAdmin(ethers.ZeroAddress)
+              props.connect(deployer).revokeAdmin(ethers.keccak256(ethers.toUtf8Bytes("ADMIN_ROLE")), ethers.ZeroAddress)
             ).to.be.revertedWithCustomError(props, "PROPS__InvalidAddress");
+          });
+        });
+
+        describe("Parameter Admin Functionality Test", function () {
+          it("Sets parameter admin correctly.", async () => {
+            let test_address = await test.getAddress();
+            await props.connect(deployer).setupParameterAdmin(test_address, true);
+            let hasRole = await props
+              .connect(deployer)
+              .hasRole(
+                ethers.keccak256(ethers.toUtf8Bytes("PARAMETER_ADMIN_ROLE")),
+                test_address
+              );
+            assert(hasRole);
+          });
+
+          it("Emits ParameterAdminRoleSetup on parameter admin correctly.", async () => {
+            const timestamp = await time.latest();
+            let test_address = await test.getAddress();
+            await expect(
+              props.connect(deployer).setupParameterAdmin(test_address, true)
+            )
+              .to.emit(props, "ParameterAdminRoleSetup")
+              .withArgs(test_address, timestamp + 1);
+          });
+
+          it("Unsets parameteter admin correctly.", async () => {
+            let test_address = await test.getAddress();
+            await props.connect(deployer).setupParameterAdmin(test_address, true);
+            let hasRole = await props
+              .connect(deployer)
+              .hasRole(
+                ethers.keccak256(ethers.toUtf8Bytes("PARAMETER_ADMIN_ROLE")),
+                test_address
+              );
+            assert(hasRole);
+            await props.connect(deployer).setupParameterAdmin(test_address, false);
+            let hasRole2 = await props
+              .connect(deployer)
+              .hasRole(
+                ethers.keccak256(ethers.toUtf8Bytes("PARAMETER_ADMIN_ROLE")),
+                test_address
+              );
+            assert(!hasRole2);
+          });
+
+          it("Only admin can setup parameter admin.", async () => {
+            let test_address = await test.getAddress();
+            await expect(
+              props.connect(address2).setupParameterAdmin(test_address, true)
+            ).to.be.rejectedWith(
+              `AccessControl: account ${address2.address.toLowerCase()} is missing role ${ethers.keccak256(
+                ethers.toUtf8Bytes("ADMIN_ROLE")
+              )}`
+            );
+          });
+
+          it("admin can't setup zero address parameter admin.", async () => {
+            await expect(
+              props.connect(deployer).setupParameterAdmin(ethers.ZeroAddress, true)
+            ).to.be.revertedWithCustomError(props, "PROPS__InvalidAddress");
+          });
+
+          it("admin can't set individual address with parameter admin role.", async () => {
+            await expect(
+              props.connect(deployer).setupParameterAdmin(address1.address, true)
+            ).to.be.revertedWithCustomError(
+              props,
+              "PROPS__AddressNotMultiSign"
+            );
           });
         });
 
@@ -185,80 +249,10 @@ const { time } = require("@nomicfoundation/hardhat-network-helpers");
           });
         });
 
-        describe("Burner Functionality Test", function () {
-          it("Sets burner correctly.", async () => {
-            let test_address = await test.getAddress();
-            await props.connect(deployer).setupBurner(test_address, true);
-            let hasRole = await props
-              .connect(deployer)
-              .hasRole(
-                ethers.keccak256(ethers.toUtf8Bytes("BURNER_ROLE")),
-                test_address
-              );
-            assert(hasRole);
-          });
-
-          it("Emits BurnerSetup on set burner correctly.", async () => {
-            const timestamp = await time.latest();
-            let test_address = await test.getAddress();
-            await expect(
-              props.connect(deployer).setupBurner(test_address, true)
-            )
-              .to.emit(props, "BurnerSetup")
-              .withArgs(test_address, timestamp + 1);
-          });
-
-          it("Unsets burner correctly.", async () => {
-            let test_address = await test.getAddress();
-            await props.connect(deployer).setupBurner(test_address, true);
-            let hasRole = await props
-              .connect(deployer)
-              .hasRole(
-                ethers.keccak256(ethers.toUtf8Bytes("BURNER_ROLE")),
-                test_address
-              );
-            assert(hasRole);
-            await props.connect(deployer).setupBurner(test_address, false);
-            let hasRole2 = await props
-              .connect(deployer)
-              .hasRole(
-                ethers.keccak256(ethers.toUtf8Bytes("BURNER_ROLE")),
-                test_address
-              );
-            assert(!hasRole2);
-          });
-
-          it("Only admin can setup burner.", async () => {
-            let test_address = await test.getAddress();
-            await expect(
-              props.connect(address2).setupBurner(test_address, true)
-            ).to.be.rejectedWith(
-              `AccessControl: account ${address2.address.toLowerCase()} is missing role ${ethers.keccak256(
-                ethers.toUtf8Bytes("ADMIN_ROLE")
-              )}`
-            );
-          });
-
-          it("admin can't setup zero address burner.", async () => {
-            await expect(
-              props.connect(deployer).setupBurner(ethers.ZeroAddress, true)
-            ).to.be.revertedWithCustomError(props, "PROPS__InvalidAddress");
-          });
-
-          it("admin can't set individual address with burner role.", async () => {
-            await expect(
-              props.connect(deployer).setupBurner(address1.address, true)
-            ).to.be.revertedWithCustomError(
-              props,
-              "PROPS__AddressNotMultiSign"
-            );
-          });
-        });
-
         describe("setMintTrancheCap Functionality Test", function () {
           it("Sets MintTrancheCap correctly.", async () => {
             let test_address = await test.getAddress();
-            await props.connect(deployer).setupMinter(test_address, true);
+            await props.connect(deployer).setupParameterAdmin(test_address, true);
             await test
               .connect(deployer)
               .setMintTrancheCap(ethers.parseUnits("5", 8));
@@ -269,7 +263,7 @@ const { time } = require("@nomicfoundation/hardhat-network-helpers");
 
           it("Emits MintTrancheCapSetup on MintTrancheCap correctly.", async () => {
             let test_address = await test.getAddress();
-            await props.connect(deployer).setupMinter(test_address, true);
+            await props.connect(deployer).setupParameterAdmin(test_address, true);
             const timestamp = await time.latest();
             await expect(
               test
@@ -282,7 +276,7 @@ const { time } = require("@nomicfoundation/hardhat-network-helpers");
 
           it("only minter role can set MintTrancheCap ", async () => {
             let test_address = await test.getAddress();
-            await props.connect(deployer).setupMinter(test_address, true);
+            await props.connect(deployer).setupParameterAdmin(test_address, true);
 
             await expect(
               props
@@ -290,14 +284,14 @@ const { time } = require("@nomicfoundation/hardhat-network-helpers");
                 .setMintTrancheCap(ethers.parseUnits("12000000", 8))
             ).to.be.rejectedWith(
               `AccessControl: account ${deployer.address.toLowerCase()} is missing role ${ethers.keccak256(
-                ethers.toUtf8Bytes("MINTER_ROLE")
+                ethers.toUtf8Bytes("PARAMETER_ADMIN_ROLE")
               )}`
             );
           });
 
           it("can't set MintTrancheCap > mint_cap.", async () => {
             let test_address = await test.getAddress();
-            await props.connect(deployer).setupMinter(test_address, true);
+            await props.connect(deployer).setupParameterAdmin(test_address, true);
 
             await expect(
               test
@@ -311,7 +305,7 @@ const { time } = require("@nomicfoundation/hardhat-network-helpers");
 
           it("can't set MintTrancheCap > min_tranche_limit.", async () => {
             let test_address = await test.getAddress();
-            await props.connect(deployer).setupMinter(test_address, true);
+            await props.connect(deployer).setupParameterAdmin(test_address, true);
 
             await expect(
               test
@@ -325,12 +319,12 @@ const { time } = require("@nomicfoundation/hardhat-network-helpers");
 
           it("can set MintTrancheCap multiple times after mint_delay", async () => {
             let test_address = await test.getAddress();
-            await props.connect(deployer).setupMinter(test_address, true);
+            await props.connect(deployer).setupParameterAdmin(test_address, true);
             test
               .connect(deployer)
               .setMintTrancheCap(ethers.parseUnits("10000", 8));
 
-            await ethers.provider.send("evm_increaseTime", [86401]);
+            await ethers.provider.send("evm_increaseTime", [172801]);
             await ethers.provider.send("evm_mine");
 
             test
@@ -338,12 +332,12 @@ const { time } = require("@nomicfoundation/hardhat-network-helpers");
               .setMintTrancheCap(ethers.parseUnits("10000", 8));
 
             const data = await props.getCoinConfig();
-            assert.equal(data[1], ethers.toBigInt("1000000000000"));
+            assert.equal(data[1], ethers.parseUnits("10000", 8));
           });
 
           it("can't set MintTrancheCap multiple times without mint_delay", async () => {
             let test_address = await test.getAddress();
-            await props.connect(deployer).setupMinter(test_address, true);
+            await props.connect(deployer).setupParameterAdmin(test_address, true);
             await test
               .connect(deployer)
               .setMintTrancheCap(ethers.parseUnits("100000", 8));
@@ -352,110 +346,6 @@ const { time } = require("@nomicfoundation/hardhat-network-helpers");
               test
                 .connect(deployer)
                 .setMintTrancheCap(ethers.parseUnits("100000", 8))
-            ).to.be.revertedWithCustomError(
-              props,
-              "PROPS__FrequencyTimeLimitNotReached"
-            );
-          });
-        });
-
-        describe("setBurnTrancheCap Functionality Test", function () {
-          it("Sets BurnTrancheCap correctly.", async () => {
-            let test_address = await test.getAddress();
-            await props.connect(deployer).setupBurner(test_address, true);
-            await test
-              .connect(deployer)
-              .setBurnTrancheCap(ethers.parseUnits("5", 8));
-
-            const data = await props.getCoinConfig();
-            assert.equal(data[2], ethers.toBigInt("500000000"));
-          });
-
-          it("Emits  BurnTrancheCap correctly.", async () => {
-            let test_address = await test.getAddress();
-            await props.connect(deployer).setupBurner(test_address, true);
-            const timestamp = await time.latest();
-            await expect(
-              test
-                .connect(deployer)
-                .setBurnTrancheCap(ethers.parseUnits("5", 8))
-            )
-              .to.emit(props, "BurnTrancheCapSetup")
-              .withArgs(test_address, ethers.parseUnits("5", 8), timestamp + 1);
-          });
-
-          it("only burner role can set MintTrancheCap ", async () => {
-            let test_address = await test.getAddress();
-            await props.connect(deployer).setupBurner(test_address, true);
-
-            await expect(
-              props
-                .connect(deployer)
-                .setBurnTrancheCap(ethers.parseUnits("12000000", 8))
-            ).to.be.rejectedWith(
-              `AccessControl: account ${deployer.address.toLowerCase()} is missing role ${ethers.keccak256(
-                ethers.toUtf8Bytes("BURNER_ROLE")
-              )}`
-            );
-          });
-
-          it("can't set BurnTrancheCap > mint_cap.", async () => {
-            let test_address = await test.getAddress();
-            await props.connect(deployer).setupBurner(test_address, true);
-
-            await expect(
-              test
-                .connect(deployer)
-                .setBurnTrancheCap(ethers.parseUnits("12000000000", 8))
-            ).to.be.revertedWithCustomError(
-              props,
-              "PROPS__BurnTrancheCapOutOfRange"
-            );
-          });
-
-          it("can't set MintTrancheCap > min_tranche_limit.", async () => {
-            let test_address = await test.getAddress();
-            await props.connect(deployer).setupBurner(test_address, true);
-
-            await expect(
-              test
-                .connect(deployer)
-                .setBurnTrancheCap(ethers.parseUnits("10000001", 8))
-            ).to.be.revertedWithCustomError(
-              props,
-              "PROPS__BurnTrancheCapOutOfRange"
-            );
-          });
-
-          it("can set BurnTrancheCap multiple times after burn_delay", async () => {
-            let test_address = await test.getAddress();
-            await props.connect(deployer).setupBurner(test_address, true);
-            test
-              .connect(deployer)
-              .setBurnTrancheCap(ethers.parseUnits("10000", 8));
-
-            await ethers.provider.send("evm_increaseTime", [86401]);
-            await ethers.provider.send("evm_mine");
-
-            test
-              .connect(deployer)
-              .setBurnTrancheCap(ethers.parseUnits("10000", 8));
-
-            const data = await props.getCoinConfig();
-            assert.equal(data[2], ethers.toBigInt("1000000000000"));
-          });
-
-          it("can't set BurnTrancheCap multiple times without burn_delay", async () => {
-            let test_address = await test.getAddress();
-            await props.connect(deployer).setupBurner(test_address, true);
-            await test
-              .connect(deployer)
-              .setBurnTrancheCap(ethers.parseUnits("10000000", 8));
-
-            await expect(
-              test
-                .connect(deployer)
-                .setBurnTrancheCap(ethers.parseUnits("10000000", 8))
             ).to.be.revertedWithCustomError(
               props,
               "PROPS__FrequencyTimeLimitNotReached"
@@ -485,26 +375,27 @@ const { time } = require("@nomicfoundation/hardhat-network-helpers");
             );
           });
 
-          it("can't mint more than min_cap.", async () => {
+          it("can't mint more than mint_cap.", async () => {
             let test_address = await test.getAddress();
             await props.connect(deployer).setupMinter(test_address, true);
+            await props.connect(deployer).setupParameterAdmin(test_address, true);
             await test
               .connect(deployer)
-              .setMintTrancheCap(ethers.parseUnits("10000000", 8));
+              .setMintTrancheCap(ethers.parseUnits("1000000", 8));
 
-            for (let i = 0; i < 120; i++) {
+            for (let i = 0; i < 1200; i++) {
               await test
                 .connect(deployer)
-                .mint(address1.address, ethers.parseUnits("10000000", 8));
+                .mint(address1.address, ethers.parseUnits("1000000", 8));
 
-              await ethers.provider.send("evm_increaseTime", [86401]);
+              await ethers.provider.send("evm_increaseTime", [172801]);
               await ethers.provider.send("evm_mine");
             }
 
             await expect(
               test
                 .connect(deployer)
-                .mint(address1.address, ethers.parseUnits("10000000", 8))
+                .mint(address1.address, ethers.parseUnits("1000000", 8))
             ).to.be.revertedWithCustomError(props, "PROPS__MintCapReached");
           });
 
@@ -532,99 +423,6 @@ const { time } = require("@nomicfoundation/hardhat-network-helpers");
               test
                 .connect(deployer)
                 .mint(address1.address, ethers.parseUnits("10000", 8))
-            ).to.be.revertedWithCustomError(
-              props,
-              "PROPS__FrequencyTimeLimitNotReached"
-            );
-          });
-        });
-
-        describe("burn Functionality Test", function () {
-          it("burn props correctly.", async () => {
-            let test_address = await test.getAddress();
-            await props.connect(deployer).setupMinter(test_address, true);
-            await props.connect(deployer).setupBurner(test_address, true);
-            await test.connect(deployer).mint(address1.address, 1000000000000);
-
-            let address_1_bal = await props.balanceOf(address1.address);
-            assert.equal(address_1_bal.toString(), "1000000000000");
-
-            await test.connect(deployer).burn(address1.address, 100000000);
-
-            let address_1_bal_after = await props.balanceOf(address1.address);
-
-            let amount = ethers.toNumber(address_1_bal) - 100000000;
-            assert.equal(address_1_bal_after.toString(), amount.toString());
-          });
-
-          it("only burner can burn props.", async () => {
-            let test_address = await test.getAddress();
-            await props.connect(deployer).setupMinter(test_address, true);
-            await expect(
-              test.connect(deployer).burn(address1.address, 100000000)
-            ).to.be.rejectedWith(
-              `AccessControl: account ${test_address.toLowerCase()} is missing role ${ethers.keccak256(
-                ethers.toUtf8Bytes("BURNER_ROLE")
-              )}`
-            );
-          });
-
-          it("can't burn more than current supply.", async () => {
-            let test_address = await test.getAddress();
-            await props.connect(deployer).setupBurner(test_address, true);
-            await props.connect(deployer).setupMinter(test_address, true);
-            await test
-              .connect(deployer)
-              .setBurnTrancheCap(ethers.parseUnits("10000000", 8));
-
-            await test
-              .connect(deployer)
-              .mint(address1.address, ethers.parseUnits("1000", 8));
-
-            await expect(
-              test
-                .connect(deployer)
-                .burn(address1.address, ethers.parseUnits("1005", 8))
-            ).to.be.revertedWithCustomError(
-              props,
-              "PROPS__BurnAmountNotAvailable"
-            );
-          });
-
-          it("can't burn more than burn tranche limit.", async () => {
-            let test_address = await test.getAddress();
-            await props.connect(deployer).setupBurner(test_address, true);
-            await props.connect(deployer).setupMinter(test_address, true);
-            await test
-              .connect(deployer)
-              .mint(address1.address, ethers.parseUnits("1000", 8));
-
-            await expect(
-              test
-                .connect(deployer)
-                .burn(address1.address, ethers.parseUnits("1000000010", 8))
-            ).to.be.revertedWithCustomError(
-              props,
-              "PROPS__AmountTrancheCapReached"
-            );
-          });
-
-          it("can't burn before mint delay passed", async () => {
-            let test_address = await test.getAddress();
-            await props.connect(deployer).setupMinter(test_address, true);
-            await props.connect(deployer).setupBurner(test_address, true);
-            await test
-              .connect(deployer)
-              .mint(address1.address, ethers.parseUnits("10000", 8));
-
-            await test
-              .connect(deployer)
-              .burn(address1.address, ethers.parseUnits("5000", 8));
-
-            await expect(
-              test
-                .connect(deployer)
-                .burn(address1.address, ethers.parseUnits("5000", 8))
             ).to.be.revertedWithCustomError(
               props,
               "PROPS__FrequencyTimeLimitNotReached"
