@@ -9,11 +9,14 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 error PROPS__InvalidAddress();
 error PROPS__MintCapReached(uint256 limit);
 error PROPS__AddressNotMultiSign();
-error PROPS__AmountTrancheCapReached();
+error PROPS__AmountTrancheLimitReached();
 error PROPS__BurnAmountNotAvailable();
-error PROPS__FrequencyTimeLimitNotReached(uint256 current_timestamp, uint256 unlock_timestamp);
-error PROPS__BurnTrancheCapOutOfRange();
-error PROPS__MintTrancheCapOutOfRange();
+error PROPS__FrequencyTimeLimitNotReached(
+    uint256 current_timestamp,
+    uint256 unlock_timestamp
+);
+error PROPS__BurnTrancheLimitOutOfRange();
+error PROPS__MintTrancheLimitOutOfRange();
 
 /// @title $PROPS evm coin
 /// @author Propbase
@@ -22,32 +25,39 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
     //Roles
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
-    bytes32 public constant PARAMETER_ADMIN_ROLE = keccak256("PARAMETER_ADMIN_ROLE");
+    bytes32 public constant LIMITER_ROLE = keccak256("LIMITER_ROLE");
 
-    uint256 public constant MINT_CAP = 120000000000000000; // Maximum supply
-    string public _iconURI; // Coin image uri
+    uint256 public constant TOTAL_SUPPLY = 120000000000000000; // Maximum supply
+    uint256 private constant MINT_TRANCHE_MAX = 100000000000000; // Limit of max burn transche limit 1 million tokens as $PROPS has 8 decimals
+    uint256 private constant MINT_DELAY = 172800; // Delay of 2 days per mint
     uint256 public current_supply = 0; // Variable tracking current supply
-    uint256 public mint_tranche_cap = 0; // Minting limit per mint call
+    uint256 public mint_tranche_limit = 0; // Minting limit per mint call
     uint256 public last_mint_timestamp = 0; // Variable tracking last mint timestamp
     uint256 public last_mint_tranche_timestamp = 0; // Variable tracking last mint tranche set timestamp
-    uint256 private constant MAX_MINT_TRANCHE_CAP = 100000000000000; // Limit of max burn transche limit 1 million tokens as $PROPS has 8 decimals
-    uint256 private constant MINT_DELAY = 172800; // Delay of 2 days per mint
+    address public admin;
+    address public minter;
+    address public limiter;
     //events
-    event PropsMinted(address indexed receiver, uint256 amount, uint256 timestamp);
-    event PropsBurned(address indexed from, uint256 amount, uint256 timestamp);
+    event PropsMinted(
+        address indexed receiver,
+        uint256 amount,
+        uint256 timestamp,
+        uint256 current_supply
+    );
+    event AdminChanged(address indexed new_admin, uint256 timestamp);
     event AdminRevoked(address indexed admin, uint256 timestamp);
-    event AdminSetup(address indexed new_admin, uint256 timestamp);
-    event MinterSetup(address indexed new_minter, uint256 timestamp);
-    event ParameterAdminRoleSetup(address indexed new_parameter_admin, uint256 timestamp);
-    event MintTrancheCapSetup(address indexed minter, uint256 new_mint_tranche_cap, uint256 timestamp);
+    event MinterChanged(address indexed new_minter, uint256 timestamp);
+    event LimiterChanged(address indexed new_limiter, uint256 timestamp);
+    event MintTrancheLimitSetup(
+        address indexed minter,
+        uint256 new_mint_tranche_limit,
+        uint256 timestamp
+    );
 
     // constructor setting intial configurations
-    constructor(
-        uint256 mint_tranche,//5 million hard code //need to change later
-        string memory icon_uri
-    ) ERC20("PROPS", "PROPS") {
-        _iconURI = icon_uri;
-        mint_tranche_cap = mint_tranche;
+    constructor(uint256 mint_tranche) ERC20("Propbase", "PROPS") {
+        mint_tranche_limit = mint_tranche;
+        admin = msg.sender;
         _setupRole(ADMIN_ROLE, msg.sender);
     }
 
@@ -69,9 +79,9 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
     }
 
     //Checks if updated tranche is in max tranche limit
-    modifier checkTrancheLimit(uint256 amount, uint256 limit_cap) {
-        if (amount > limit_cap) {
-            revert PROPS__AmountTrancheCapReached();
+    modifier checkTrancheLimit(uint256 amount, uint256 limit_max) {
+        if (amount > limit_max) {
+            revert PROPS__AmountTrancheLimitReached();
         }
         _;
     }
@@ -92,16 +102,23 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
     /// @dev Only MINTER_ROLE user can mint that to in specific delays and mint tranche limits per transaction.
     /// @param to receiver address of $PROPS
     /// @param amount receiver amount $PROPS
-    function mint(address to,uint256 amount)
-    public onlyRole(MINTER_ROLE) checkTrancheLimit(amount, mint_tranche_cap) checkDelay(last_mint_timestamp, MINT_DELAY){
-        if (current_supply + amount > MINT_CAP) {
-            revert PROPS__MintCapReached(MINT_CAP);
+    function mint(
+        address to,
+        uint256 amount
+    )
+        public
+        onlyRole(MINTER_ROLE)
+        checkTrancheLimit(amount, mint_tranche_limit)
+        checkDelay(last_mint_timestamp, MINT_DELAY)
+    {
+        if (current_supply + amount > TOTAL_SUPPLY) {
+            revert PROPS__MintCapReached(TOTAL_SUPPLY);
         }
         current_supply += amount;
         last_mint_timestamp = block.timestamp;
         _mint(to, amount);
 
-        emit PropsMinted(to, amount, block.timestamp);
+        emit PropsMinted(to, amount, block.timestamp, current_supply);
     }
 
     /// @notice gets decimals of $PROPS
@@ -110,83 +127,103 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
         return 8;
     }
 
+    /// @notice sets ADMIN_ROLE.
+    /// @dev Only ADMIN_ROLE user can set ADMIN_ROLE and address should be Multisign.
+    /// @param new_admin new ADMIN_ROLE user.
+    function changeAdmin(
+        address new_admin
+    )
+        external
+        onlyRole(ADMIN_ROLE)
+        isValidAddress(new_admin)
+        isMultisignAddress(new_admin)
+    {
+        _grantRole(ADMIN_ROLE, new_admin);
+        _revokeRole(ADMIN_ROLE, msg.sender);
+        admin = new_admin;
+
+        emit AdminChanged(new_admin, block.timestamp);
+    }
+
     /// @notice Revokes ADMIN_ROLE.
-    /// @dev Only ADMIN_ROLE user can revoke ADMIN_ROLE.
+    /// @dev Only current ADMIN_ROLE user can revoke ADMIN_ROLE.
     /// @param user ADMIN_ROLE user to be revoked ADMIN_ROLE
-    function revokeAdmin(bytes32 role, address user) 
-    external onlyRole(ADMIN_ROLE) isValidAddress(user) {
-        _revokeRole(role, user);
+    function revokeAdmin(
+        address user
+    ) external onlyRole(ADMIN_ROLE) isValidAddress(user) {
+        _revokeRole(ADMIN_ROLE, user);
 
         emit AdminRevoked(user, block.timestamp);
     }
 
-    /// @notice sets ADMIN_ROLE.
-    /// @dev Only ADMIN_ROLE user can set ADMIN_ROLE and address should be Multisign.
-    /// @param admin new ADMIN_ROLE user.
-    function setupAdmin(address admin)
-    external onlyRole(ADMIN_ROLE) isValidAddress(admin) isMultisignAddress(admin)
-    {
-        _grantRole(ADMIN_ROLE, admin);
-
-        emit AdminSetup(admin, block.timestamp);
-    }
-
-    /// @notice sets MINTER_ROLE.
+    /// @notice sets Minter.
     /// @dev Only ADMIN_ROLE user can set MINTER_ROLE and address should be Multisign.
-    /// @param minter new MINTER_ROLE user.
-    /// @param enabled boolean specifying whether to set or unset MINTER_ROLE.
-    function setupMinter(address minter, bool enabled)
-    external onlyRole(ADMIN_ROLE) isValidAddress(minter) isMultisignAddress(minter){
-        if (enabled) _grantRole(MINTER_ROLE, minter);
-        else _revokeRole(MINTER_ROLE, minter);
+    /// @param new_minter new MINTER_ROLE user.
+    function changeMinter(
+        address new_minter
+    )
+        external
+        onlyRole(ADMIN_ROLE)
+        isValidAddress(new_minter)
+        isMultisignAddress(new_minter)
+    {
+        _grantRole(MINTER_ROLE, new_minter);
+        if (minter != address(0)) _revokeRole(MINTER_ROLE, minter);
+        minter = new_minter;
 
-        emit MinterSetup(minter, block.timestamp);
+        emit MinterChanged(new_minter, block.timestamp);
     }
 
-    /// @notice sets MINTER_ROLE.
-    /// @dev Only ADMIN_ROLE user can set PARAMETER_ADMIN_ROLE and address should be Multisign.
-    /// @param parameter_admin new PARAMETER_ADMIN_ROLE user.
-    /// @param enabled boolean specifying whether to set or unset PARAMETER_ADMIN_ROLE.
-    function setupParameterAdmin(address parameter_admin, bool enabled)
-    external onlyRole(ADMIN_ROLE) isValidAddress(parameter_admin) isMultisignAddress(parameter_admin){
-        if (enabled) _grantRole(PARAMETER_ADMIN_ROLE, parameter_admin);
-        else _revokeRole(PARAMETER_ADMIN_ROLE, parameter_admin);
+    /// @notice sets Limiter.
+    /// @dev Only ADMIN_ROLE user can set LIMITER_ROLE and address should be Multisign.
+    /// @param new_admin new LIMITER_ROLE user.
+    function changeLimiter(
+        address new_admin
+    )
+        external
+        onlyRole(ADMIN_ROLE)
+        isValidAddress(new_admin)
+        isMultisignAddress(new_admin)
+    {
+        _grantRole(LIMITER_ROLE, new_admin);
+        if (limiter != address(0)) _revokeRole(LIMITER_ROLE, limiter);
+        limiter = new_admin;
 
-        emit ParameterAdminRoleSetup(parameter_admin, block.timestamp);
+        emit LimiterChanged(new_admin, block.timestamp);
     }
 
     /**
-     * @notice sets MintTrancheCap.
-     * @dev Only MINTER_ROLE user can set MintTrancheCap and limit should be less than max mint tranche cap that to in specific delays.
-     * @param limit new MintTrancheCap limit.
+     * @notice sets MintTrancheLimit.
+     * @dev Only MINTER_ROLE user can set MintTrancheLimit and limit should be less than max mint tranche max that to in specific delays.
+     * @param limit new MintTrancheLimit limit.
      */
-    function setMintTrancheCap(uint256 limit)
-    external onlyRole(PARAMETER_ADMIN_ROLE) checkDelay(last_mint_tranche_timestamp, MINT_DELAY){
-        if (limit > MINT_CAP || limit > MAX_MINT_TRANCHE_CAP) {
-            revert PROPS__MintTrancheCapOutOfRange();
+    function setMintTrancheLimit(
+        uint256 limit
+    )
+        external
+        onlyRole(LIMITER_ROLE)
+        checkDelay(last_mint_tranche_timestamp, MINT_DELAY)
+    {
+        if (limit > TOTAL_SUPPLY || limit > MINT_TRANCHE_MAX) {
+            revert PROPS__MintTrancheLimitOutOfRange();
         }
         last_mint_tranche_timestamp = block.timestamp;
-        mint_tranche_cap = limit;
+        mint_tranche_limit = limit;
 
-        emit MintTrancheCapSetup(msg.sender, limit, block.timestamp);
+        emit MintTrancheLimitSetup(msg.sender, limit, block.timestamp);
     }
 
     //remove
     //view functions
 
     /// @notice gets app configurations
-    /// @return MINT_CAP
-    /// @return mint_tranche_cap
-    /// @return MINT_DELAY
-    /// @return _iconURI
-    function getCoinConfig()
-    external view returns (uint256, uint256, uint256, string memory)
-    {
-        return (
-            MINT_CAP,
-            mint_tranche_cap,
-            MINT_DELAY,
-            _iconURI
-        );
+    /// @return current_supply
+    /// @return mint_tranche_limit
+    function getCoinConfig() external view returns (uint256, uint256) {
+        return (current_supply, mint_tranche_limit);
+    }
+
+    function getRole(bytes32 role) external view returns (bytes32) {
+        return getRoleAdmin(role);
     }
 }

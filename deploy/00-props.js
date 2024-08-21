@@ -1,16 +1,13 @@
-const { network, ethers } = require("hardhat");
-const { developmentChains } = require("../helper-hardhat-config");
-const { verify } = require("../utils/verify");
+const { network, ethers } = require('hardhat');
+const { developmentChains } = require('../helper-hardhat-config');
+const { verify } = require('../utils/verify');
 
 module.exports = async function ({ getNamedAccounts, deployments }) {
   const { deploy, log } = deployments;
   const { deployer } = await getNamedAccounts();
   const chainId = network.config.chainId;
-  const args = [
-    ethers.parseUnits("1000000", 8),
-    "www.icon.com",
-  ];
-  const props = await deploy("PROPS", {
+  const args = [ethers.parseUnits('1000000', 8)];
+  const props = await deploy('PROPS', {
     from: deployer,
     args: args,
     log: true,
@@ -18,10 +15,10 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
   });
 
   if (!developmentChains.includes(network.name)) {
-    console.log("VERIFYING.........");
+    console.log('VERIFYING.........');
     await verify(props.address, args);
   }
 
-  console.log("------------------------------------");
+  console.log('------------------------------------');
 };
-module.exports.tags = ["all", "erc20"];
+module.exports.tags = ['all', 'erc20'];
