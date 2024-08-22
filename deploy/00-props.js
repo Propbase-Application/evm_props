@@ -6,7 +6,7 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
   const { deploy, log } = deployments;
   const { deployer } = await getNamedAccounts();
   const chainId = network.config.chainId;
-  const args = [ethers.parseUnits('1000000', 8)];
+  const args = [ethers.parseUnits('15000000', 8)];
   const props = await deploy('PROPS', {
     from: deployer,
     args: args,

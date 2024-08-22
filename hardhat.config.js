@@ -30,6 +30,12 @@ module.exports = {
       gasPrice: 20000000000,
       accounts: [PRIVATE_KEY],
     },
+    baseSepolia: {
+      url: process.env.BASE_CHAIN_SEPOLIA_RPC,
+      chainId: 84532,
+      gasPrice: 20000000000,
+      accounts: [PRIVATE_KEY],
+    },
     base_chain_mainnet: {
       url: process.env.BASE_CHAIN_MAINNET_RPC,
       chainId: 8453,
@@ -80,6 +86,7 @@ module.exports = {
     apiKey: {
       bscTestnet: process.env.BNB_SCAN_API_KEY,
       base_chain_sepolia: process.env.BASE_CHAIN_SEPOLIA_API_KEY,
+      baseSepolia: process.env.BASE_CHAIN_SEPOLIA_API_KEY,
       base_chain_mainnet: process.env.BASE_CHAIN_MAINNET_API_KEY,
     },
     customChains: [],
