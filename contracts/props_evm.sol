@@ -55,17 +55,9 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
     );
 
     // constructor setting intial configurations
-    constructor(
-        uint256 mint_tranche,
-        address new_treasury
-    )
-        ERC20("Propbase", "PROPS")
-        isValidAddress(new_treasury)
-        isMultisignAddress(new_treasury)
-    {
+    constructor(uint256 mint_tranche) ERC20("Propbase", "PROPS") {
         mint_tranche_limit = mint_tranche;
         admin = msg.sender;
-        treasury = new_treasury;
         _setupRole(ADMIN_ROLE, msg.sender);
     }
 
@@ -200,7 +192,7 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
     }
 
     /// @notice sets Treasury.
-    /// @dev Only ADMIN_ROLE user can set ADMIN_ROLE and address should be Multisign.
+    /// @dev Only ADMIN_ROLE user can set treasury and address should be Multisign.
     /// @param new_treasury new treasury user.
     function changeTreasury(
         address new_treasury

@@ -10,7 +10,14 @@ const { isAwaitExpression } = require('typescript');
 !developmentChains.includes(network.name)
   ? describe.skip
   : describe('PROPS TESTS', function () {
-      let props, test, deployer, address1, address2, address3, test1;
+      let props,
+        test,
+        deployer,
+        address1,
+        address2,
+        address3,
+        test1,
+        treasury_address;
 
       beforeEach(async () => {
         accounts = await ethers.getSigners();
@@ -21,15 +28,14 @@ const { isAwaitExpression } = require('typescript');
 
         const Props = await ethers.getContractFactory('PROPS');
         const Test = await ethers.getContractFactory('TEST');
-        treasury = await Test.deploy(deployer.address);
-        let treasury_address = await treasury.getAddress();
-        props = await Props.deploy(
-          ethers.parseUnits('2000000', 8),
-          treasury_address
-        );
+        props = await Props.deploy(ethers.parseUnits('2000000', 8));
         let props_address = await props.getAddress();
         test = await Test.deploy(props_address);
         test1 = await Test.deploy(props_address);
+
+        const treasury = await Test.deploy(deployer.address);
+        treasury_address = await treasury.getAddress();
+        await props.connect(deployer).changeTreasury(treasury_address);
       });
       describe('Basic Functionality Test', function () {
         it('Initializes the PROPS Correctly.', async () => {
@@ -419,7 +425,7 @@ const { isAwaitExpression } = require('typescript');
           await props.connect(deployer).changeMinter(test_address);
           await test.connect(deployer).mint(1000000000000);
 
-          let address_1_bal = await props.balanceOf(treasury.address);
+          let address_1_bal = await props.balanceOf(treasury_address);
           assert.equal(address_1_bal.toString(), '1000000000000');
         });
 
@@ -540,12 +546,13 @@ const { isAwaitExpression } = require('typescript');
           const data = await props.mint_tranche_limit();
           assert.equal(data, ethers.parseUnits('1000000', 8));
 
-          let address_1_bal = await props.balanceOf(treasury.address);
+          let address_1_bal = await props.balanceOf(treasury_address);
           assert.equal(address_1_bal.toString(), '800000000000000');
         });
       });
     });
 describe('Full Flow Test 2', function () {
+  let Test;
   beforeEach(async () => {
     accounts = await ethers.getSigners();
     deployer = accounts[0];
@@ -554,9 +561,8 @@ describe('Full Flow Test 2', function () {
     address3 = accounts[3];
 
     const Props = await ethers.getContractFactory('PROPS');
-    const Test = await ethers.getContractFactory('TEST');
-    treasury = await Test.deploy(deployer.address);
-    props = await Props.deploy(ethers.parseUnits('15000000', 8), treasury);
+    Test = await ethers.getContractFactory('TEST');
+    props = await Props.deploy(ethers.parseUnits('15000000', 8));
     let props_address = await props.getAddress();
     test = await Test.deploy(props_address);
     test1 = await Test.deploy(props_address);
@@ -566,7 +572,10 @@ describe('Full Flow Test 2', function () {
     let test_address = await test.getAddress();
     await props.connect(deployer).changeMinter(test_address);
     await props.connect(deployer).changeLimiter(test_address);
-    // await props.connect(deployer).changeTreasury(test_address);
+
+    const treasury = await Test.deploy(deployer.address);
+    let treasury_address = await treasury.getAddress();
+    await props.connect(deployer).changeTreasury(treasury_address);
 
     let hasMinterRole = await props
       .connect(deployer)
@@ -606,9 +615,10 @@ describe('Full Flow Test 2', function () {
     const data = await props.mint_tranche_limit();
     assert.equal(data, ethers.parseUnits('1000000', 8));
 
-    let address_1_bal = await props.balanceOf(treasury.address);
+    let address_1_bal = await props.balanceOf(treasury_address);
     assert.equal(address_1_bal.toString(), '1500000000000000');
-    await props.connect(deployer).revokeAdmin(deployer.address); // minter, limiter, treasury cannot be called
+
+    await props.connect(deployer).revokeAdmin(deployer.address);
     let hasAdminRole = await props
       .connect(deployer)
       .hasRole(
