@@ -1,6 +1,7 @@
 # Evm Props
 
 This project is implementation of PROPS coin in evm for which the PROPS coin from Aptos will be bridged.
+More on security protocol is mentioned [here](docs/security_protocol.md)
 
 ## Environment Variables
 
