@@ -35,6 +35,8 @@ const { isAwaitExpression } = require('typescript');
 
         const treasury = await Test.deploy(deployer.address);
         treasury_address = await treasury.getAddress();
+        const constractTreasury = await props.treasury();
+        assert.equal(constractTreasury, 0x0);
         await props.connect(deployer).changeTreasury(treasury_address);
       });
       describe('Basic Functionality Test', function () {
@@ -311,6 +313,60 @@ const { isAwaitExpression } = require('typescript');
         it("admin can't set single sign address with minter role.", async () => {
           await expect(
             props.connect(deployer).changeMinter(address1.address)
+          ).to.be.revertedWithCustomError(props, 'PROPS__AddressNotMultiSign');
+        });
+      });
+
+      describe('changeTreasury', function () {
+        it('Sets treasury correctly.', async () => {
+          let test_address = await test.getAddress();
+          await props.connect(deployer).changeTreasury(test_address);
+          const newTreasury = await props.treasury();
+          assert.equal(newTreasury, test_address);
+        });
+
+        it('Sets treasury twice.', async () => {
+          let test_address = await test.getAddress();
+          await props.connect(deployer).changeTreasury(test_address);
+
+          const newTreasury = await props.treasury();
+          assert.equal(newTreasury, test_address);
+
+          let test_address_1 = await test1.getAddress();
+          await props.connect(deployer).changeTreasury(test_address_1);
+
+          const newTreasury1 = await props.treasury();
+          assert.equal(newTreasury1, test_address_1);
+        });
+
+        it('Emits TreasuryChanged on treasury correctly.', async () => {
+          const timestamp = await time.latest();
+          let test_address = await test.getAddress();
+          await expect(props.connect(deployer).changeTreasury(test_address))
+            .to.emit(props, 'TreasuryChanged')
+            .withArgs(test_address, timestamp + 1);
+        });
+
+        it('Only admin can setup treasury.', async () => {
+          let test_address = await test.getAddress();
+          await expect(
+            props.connect(address2).changeTreasury(test_address)
+          ).to.be.rejectedWith(
+            `AccessControl: account ${address2.address.toLowerCase()} is missing role ${ethers.keccak256(
+              ethers.toUtf8Bytes('ADMIN_ROLE')
+            )}`
+          );
+        });
+
+        it("admin can't setup zero address treasury.", async () => {
+          await expect(
+            props.connect(deployer).changeTreasury(ethers.ZeroAddress)
+          ).to.be.revertedWithCustomError(props, 'PROPS__InvalidAddress');
+        });
+
+        it("admin can't set single sign address with treasury role.", async () => {
+          await expect(
+            props.connect(deployer).changeTreasury(address1.address)
           ).to.be.revertedWithCustomError(props, 'PROPS__AddressNotMultiSign');
         });
       });
