@@ -371,7 +371,7 @@ const { isAwaitExpression } = require('typescript');
         });
       });
 
-      describe('setMintTrancheLimit Functionality Test', function () {
+      describe('setMintTrancheLimit', function () {
         it('Sets MintTrancheLimit correctly.', async () => {
           let test_address = await test.getAddress();
           await props.connect(deployer).changeLimiter(test_address);
@@ -442,19 +442,21 @@ const { isAwaitExpression } = require('typescript');
         it('can set MintTrancheLimit multiple times after mint_delay', async () => {
           let test_address = await test.getAddress();
           await props.connect(deployer).changeLimiter(test_address);
-          test
+          await test
             .connect(deployer)
-            .setMintTrancheLimit(ethers.parseUnits('10000', 8));
+            .setMintTrancheLimit(ethers.parseUnits('1000', 8));
+
+          const data = await props.mint_tranche_limit();
 
           await ethers.provider.send('evm_increaseTime', [172801]);
           await ethers.provider.send('evm_mine');
 
-          test
+          await test
             .connect(deployer)
-            .setMintTrancheLimit(ethers.parseUnits('10000', 8));
+            .setMintTrancheLimit(ethers.parseUnits('2000', 8));
 
-          const data = await props.mint_tranche_limit();
-          assert.equal(data, ethers.parseUnits('10000', 8));
+          const data1 = await props.mint_tranche_limit();
+          assert.equal(data1, ethers.parseUnits('2000', 8));
         });
 
         it("can't set MintTrancheLimit multiple times without mint_delay", async () => {
@@ -475,7 +477,7 @@ const { isAwaitExpression } = require('typescript');
         });
       });
 
-      describe('mint Functionality Test', function () {
+      describe('mint', function () {
         it('mint props correctly.', async () => {
           let test_address = await test.getAddress();
           await props.connect(deployer).changeMinter(test_address);
@@ -483,6 +485,9 @@ const { isAwaitExpression } = require('typescript');
 
           let address_1_bal = await props.balanceOf(treasury_address);
           assert.equal(address_1_bal.toString(), '1000000000000');
+
+          const current_supply = await props.current_supply();
+          assert.equal(current_supply, ethers.toBigInt('1000000000000'));
         });
 
         it('only minter can mint props.', async () => {
