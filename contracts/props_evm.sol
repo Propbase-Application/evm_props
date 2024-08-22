@@ -129,6 +129,7 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
     function revokeAdmin(address user) 
     external onlyRole(ADMIN_ROLE) isValidAddress(user) {
         _revokeRole(ADMIN_ROLE, user);
+        admin = address(0);
 
         emit AdminRevoked(user, block.timestamp);
     }
