@@ -10,14 +10,7 @@ const { isAwaitExpression } = require('typescript');
 !developmentChains.includes(network.name)
   ? describe.skip
   : describe('PROPS TESTS', function () {
-      let props,
-        test,
-        deployer,
-        address1,
-        address2,
-        address3,
-        test1,
-        treasury_addr;
+      let props, test, deployer, address1, address2, address3, test1;
 
       beforeEach(async () => {
         accounts = await ethers.getSigners();
@@ -25,11 +18,15 @@ const { isAwaitExpression } = require('typescript');
         address1 = accounts[1];
         address2 = accounts[2];
         address3 = accounts[3];
-        treasury_addr = '0x068121c6be050cd9a20105d9133fe26ab3971b46';
 
         const Props = await ethers.getContractFactory('PROPS');
         const Test = await ethers.getContractFactory('TEST');
-        props = await Props.deploy(ethers.parseUnits('2000000', 8));
+        treasury = await Test.deploy(deployer.address);
+        let treasury_address = await treasury.getAddress();
+        props = await Props.deploy(
+          ethers.parseUnits('2000000', 8),
+          treasury_address
+        );
         let props_address = await props.getAddress();
         test = await Test.deploy(props_address);
         test1 = await Test.deploy(props_address);
@@ -420,9 +417,9 @@ const { isAwaitExpression } = require('typescript');
         it('mint props correctly.', async () => {
           let test_address = await test.getAddress();
           await props.connect(deployer).changeMinter(test_address);
-          await test.connect(deployer).mint(treasury_addr, 1000000000000);
+          await test.connect(deployer).mint(1000000000000);
 
-          let address_1_bal = await props.balanceOf(treasury_addr);
+          let address_1_bal = await props.balanceOf(treasury.address);
           assert.equal(address_1_bal.toString(), '1000000000000');
         });
 
@@ -430,7 +427,7 @@ const { isAwaitExpression } = require('typescript');
           let test_address = await test.getAddress();
           await props.connect(deployer).changeMinter(test_address);
           await expect(
-            props.connect(deployer).mint(treasury_addr, 1000000000000)
+            props.connect(deployer).mint(1000000000000)
           ).to.be.rejectedWith(
             `AccessControl: account ${deployer.address.toLowerCase()} is missing role ${ethers.keccak256(
               ethers.toUtf8Bytes('MINTER_ROLE')
@@ -447,18 +444,14 @@ const { isAwaitExpression } = require('typescript');
             .setMintTrancheLimit(ethers.parseUnits('1000000', 8));
 
           for (let i = 0; i < 1200; i++) {
-            await test
-              .connect(deployer)
-              .mint(address1.address, ethers.parseUnits('1000000', 8));
+            await test.connect(deployer).mint(ethers.parseUnits('1000000', 8));
 
             await ethers.provider.send('evm_increaseTime', [172801]);
             await ethers.provider.send('evm_mine');
           }
 
           await expect(
-            test
-              .connect(deployer)
-              .mint(address1.address, ethers.parseUnits('1000000', 8))
+            test.connect(deployer).mint(ethers.parseUnits('1000000', 8))
           ).to.be.revertedWithCustomError(props, 'PROPS__MintCapReached');
         });
 
@@ -466,9 +459,7 @@ const { isAwaitExpression } = require('typescript');
           let test_address = await test.getAddress();
           await props.connect(deployer).changeMinter(test_address);
           await expect(
-            test
-              .connect(deployer)
-              .mint(address1.address, ethers.parseUnits('1000000010', 8))
+            test.connect(deployer).mint(ethers.parseUnits('1000000010', 8))
           ).to.be.revertedWithCustomError(
             props,
             'PROPS__AmountTrancheLimitReached'
@@ -478,14 +469,10 @@ const { isAwaitExpression } = require('typescript');
         it("can't mint before mint delay passed", async () => {
           let test_address = await test.getAddress();
           await props.connect(deployer).changeMinter(test_address);
-          await test
-            .connect(deployer)
-            .mint(address1.address, ethers.parseUnits('10000', 8));
+          await test.connect(deployer).mint(ethers.parseUnits('10000', 8));
 
           await expect(
-            test
-              .connect(deployer)
-              .mint(address1.address, ethers.parseUnits('10000', 8))
+            test.connect(deployer).mint(ethers.parseUnits('10000', 8))
           ).to.be.revertedWithCustomError(
             props,
             'PROPS__FrequencyTimeLimitNotReached'
@@ -524,9 +511,7 @@ const { isAwaitExpression } = require('typescript');
           assert(!hasAdminRole);
 
           for (let i = 0; i < 4; i++) {
-            await test
-              .connect(deployer)
-              .mint(address1.address, ethers.parseUnits('2000000', 8));
+            await test.connect(deployer).mint(ethers.parseUnits('2000000', 8));
 
             const current_timestamp = await time.latest();
             let mint_timestamp = await props.last_mint_timestamp();
@@ -555,7 +540,7 @@ const { isAwaitExpression } = require('typescript');
           const data = await props.mint_tranche_limit();
           assert.equal(data, ethers.parseUnits('1000000', 8));
 
-          let address_1_bal = await props.balanceOf(treasury_addr);
+          let address_1_bal = await props.balanceOf(treasury.address);
           assert.equal(address_1_bal.toString(), '800000000000000');
         });
       });
@@ -567,11 +552,11 @@ describe('Full Flow Test 2', function () {
     address1 = accounts[1];
     address2 = accounts[2];
     address3 = accounts[3];
-    treasury_addr = '0x068121c6be050cd9a20105d9133fe26ab3971b46';
 
     const Props = await ethers.getContractFactory('PROPS');
     const Test = await ethers.getContractFactory('TEST');
-    props = await Props.deploy(ethers.parseUnits('15000000', 8));
+    treasury = await Test.deploy(deployer.address);
+    props = await Props.deploy(ethers.parseUnits('15000000', 8), treasury);
     let props_address = await props.getAddress();
     test = await Test.deploy(props_address);
     test1 = await Test.deploy(props_address);
@@ -599,9 +584,7 @@ describe('Full Flow Test 2', function () {
     assert(hasMinterRole);
     assert(hasLimiterRole);
 
-    await test
-      .connect(deployer)
-      .mint(address1.address, ethers.parseUnits('15000000', 8));
+    await test.connect(deployer).mint(ethers.parseUnits('15000000', 8));
 
     const current_timestamp = await time.latest();
     let mint_timestamp = await props.last_mint_timestamp();
@@ -623,7 +606,7 @@ describe('Full Flow Test 2', function () {
     const data = await props.mint_tranche_limit();
     assert.equal(data, ethers.parseUnits('1000000', 8));
 
-    let address_1_bal = await props.balanceOf(treasury_addr);
+    let address_1_bal = await props.balanceOf(treasury.address);
     assert.equal(address_1_bal.toString(), '1500000000000000');
     await props.connect(deployer).revokeAdmin(deployer.address); // minter, limiter, treasury cannot be called
     let hasAdminRole = await props

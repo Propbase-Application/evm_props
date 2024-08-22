@@ -14,7 +14,7 @@ contract TEST {
         props_coin.setMintTrancheLimit(amount);
     }
 
-    function mint(address to, uint256 amount) public {
-        props_coin.mint(to, amount);
+    function mint(uint256 amount) public {
+        props_coin.mint(amount);
     }
 }

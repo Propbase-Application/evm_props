@@ -35,7 +35,7 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
     address public admin;
     address public minter;
     address public limiter;
-    address public treasury = 0x068121C6be050Cd9a20105d9133FE26ab3971b46;
+    address public treasury;
     //events
     event PropsMinted(
         address indexed receiver,
@@ -55,9 +55,17 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
     );
 
     // constructor setting intial configurations
-    constructor(uint256 mint_tranche) ERC20("Propbase", "PROPS") {
+    constructor(
+        uint256 mint_tranche,
+        address new_treasury
+    )
+        ERC20("Propbase", "PROPS")
+        isValidAddress(new_treasury)
+        isMultisignAddress(new_treasury)
+    {
         mint_tranche_limit = mint_tranche;
         admin = msg.sender;
+        treasury = new_treasury;
         _setupRole(ADMIN_ROLE, msg.sender);
     }
 
@@ -98,12 +106,10 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
         _;
     }
 
-    /// @notice Mints the specific "amount"" of tokens to "to" address.
+    /// @notice Mints the specific amount of tokens
     /// @dev Only MINTER_ROLE user can mint that to in specific delays and mint tranche limits per transaction.
-    /// @param to receiver address of $PROPS
     /// @param amount receiver amount $PROPS
     function mint(
-        address to, // treasury and multi sign
         uint256 amount
     )
         public
