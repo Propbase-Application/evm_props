@@ -4,6 +4,7 @@ const { assert, expect } = require('chai');
 const { deployments, ethers, getNamedAccounts } = require('hardhat');
 const { developmentChains } = require('../helper-hardhat-config');
 const { time } = require('@nomicfoundation/hardhat-network-helpers');
+const { isAwaitExpression } = require('typescript');
 //writing the test code from here..
 
 !developmentChains.includes(network.name)
@@ -481,6 +482,70 @@ const { time } = require('@nomicfoundation/hardhat-network-helpers');
             props,
             'PROPS__FrequencyTimeLimitNotReached'
           );
+        });
+      });
+
+      describe('Full Flow Test', function () {
+        it('All functions works properly together.', async () => {
+          let test_address = await test.getAddress();
+          await props.connect(deployer).changeMinter(test_address);
+          await props.connect(deployer).changeLimiter(test_address);
+          await props.connect(deployer).revokeAdmin(deployer.address);
+
+          let hasMinterRole = await props
+            .connect(deployer)
+            .hasRole(
+              ethers.keccak256(ethers.toUtf8Bytes('MINTER_ROLE')),
+              test_address
+            );
+            let hasLimiterRole = await props
+            .connect(deployer)
+            .hasRole(
+              ethers.keccak256(ethers.toUtf8Bytes('LIMITER_ROLE')),
+              test_address
+            );
+          let hasAdminRole = await props
+            .connect(deployer)
+            .hasRole(
+              ethers.keccak256(ethers.toUtf8Bytes('ADMIN_ROLE')),
+              deployer.address
+            );
+
+          assert(hasMinterRole);
+          assert(hasLimiterRole);
+          assert(!hasAdminRole);
+
+          for (let i = 0; i < 4; i++) {
+            await test
+            .connect(deployer)
+            .mint(address1.address, ethers.parseUnits('2000000', 8));
+
+            const current_timestamp = await time.latest();
+            let mint_timestamp = await props.last_mint_timestamp()
+
+            assert.equal(current_timestamp, mint_timestamp);
+            await ethers.provider.send('evm_increaseTime', [172801]);
+            await ethers.provider.send('evm_mine');
+
+          }
+
+          let current_supply = await props.current_supply();
+          assert.equal(current_supply, ethers.parseUnits('8000000', 8));
+
+          await test
+            .connect(deployer)
+            .setMintTrancheLimit(ethers.parseUnits('1000000', 8));
+          
+          const current_timestamp = await time.latest();
+
+          let mint_tranche_timestamp = await props.last_mint_tranche_timestamp()
+          assert.equal(ethers.toBigInt(current_timestamp), mint_tranche_timestamp);
+
+          const data = await props.mint_tranche_limit();
+          assert.equal(data, ethers.parseUnits('1000000', 8));
+
+          let address_1_bal = await props.balanceOf(address1.address);
+          assert.equal(address_1_bal.toString(), '800000000000000');
         });
       });
     });
