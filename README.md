@@ -31,7 +31,7 @@ BNB_SCAN_API_KEY="BNB_SCAN_API_KEY"//optional for validating contract
 To deploy this project run
 
 ```bash
-  npx hardhat deploy --netwrok [NETWORK] // Network can be of choosing
+  npx hardhat deploy --network [NETWORK] // Network can be of choosing
 ```
 
 ## Coverage
@@ -45,16 +45,28 @@ To check the contract coverage for props run
 ```
 
 
-
-  33 passing (17s)
+  33 passing (7s)
 
 ----------------|----------|----------|----------|----------|----------------|
 File            |  % Stmts | % Branch |  % Funcs |  % Lines |Uncovered Lines |
 ----------------|----------|----------|----------|----------|----------------|
- contracts/     |       96 |       98 |    92.31 |     97.3 |                |
-  props_evm.sol |       96 |       98 |    92.31 |     97.3 |            110 |
+ contracts/     |    92.59 |       98 |    85.71 |    95.45 |                |
+  props_evm.sol |    92.59 |       98 |    85.71 |    95.45 |        127,227 |
 ----------------|----------|----------|----------|----------|----------------|
-All files       |       96 |       98 |    92.31 |     97.3 |                |
+All files       |    92.59 |       98 |    85.71 |    95.45 |                |
 ----------------|----------|----------|----------|----------|----------------|
 
+
+```
+
+## Testnet Deployment
+
+```
+npx hardhat deploy --network base_chain_sepolia
+```
+
+## Mainnet Deployment
+
+```
+npx hardhat deploy --network base_chain_mainnet
 ```
