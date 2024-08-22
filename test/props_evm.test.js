@@ -483,4 +483,48 @@ const { time } = require('@nomicfoundation/hardhat-network-helpers');
           );
         });
       });
+
+      describe('Full Flow Test', function () {
+        it('All functions works properly together.', async () => {
+          let test_address = await test.getAddress();
+          await props.connect(deployer).changeMinter(test_address);
+          await props.connect(deployer).changeLimiter(test_address);
+          await props.connect(deployer).revokeAdmin(deployer.address);
+
+          let hasMinterRole = await props
+            .connect(deployer)
+            .hasRole(
+              ethers.keccak256(ethers.toUtf8Bytes('MINTER_ROLE')),
+              test_address
+            );
+            let hasLimiterRole = await props
+            .connect(deployer)
+            .hasRole(
+              ethers.keccak256(ethers.toUtf8Bytes('LIMITER_ROLE')),
+              test_address
+            );
+          let hasAdminRole = await props
+            .connect(deployer)
+            .hasRole(
+              ethers.keccak256(ethers.toUtf8Bytes('ADMIN_ROLE')),
+              deployer.address
+            );
+
+          assert(hasMinterRole);
+          assert(!hasAdminRole);
+          await test
+            .connect(deployer)
+            .setMintTrancheLimit(ethers.parseUnits('1000000', 8));
+
+          const data = await props.mint_tranche_limit();
+          assert.equal(data, ethers.parseUnits('1000000', 8));
+
+          await test
+          .connect(deployer)
+          .mint(address1.address, ethers.parseUnits('1000000', 8));
+
+          let address_1_bal = await props.balanceOf(address1.address);
+          assert.equal(address_1_bal.toString(), '100000000000000');
+        });
+      });
     });
