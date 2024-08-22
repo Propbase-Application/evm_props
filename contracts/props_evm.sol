@@ -10,12 +10,10 @@ error PROPS__InvalidAddress();
 error PROPS__MintCapReached(uint256 limit);
 error PROPS__AddressNotMultiSign();
 error PROPS__AmountTrancheLimitReached();
-error PROPS__BurnAmountNotAvailable();
 error PROPS__FrequencyTimeLimitNotReached(
     uint256 current_timestamp,
     uint256 unlock_timestamp
 );
-error PROPS__BurnTrancheLimitOutOfRange();
 error PROPS__MintTrancheLimitOutOfRange();
 
 /// @title $PROPS evm coin
@@ -37,13 +35,24 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
     address public admin;
     address public minter;
     address public limiter;
+    address public treasury = 0x068121C6be050Cd9a20105d9133FE26ab3971b46;
     //events
-    event PropsMinted(address indexed receiver, uint256 amount, uint256 timestamp, uint256 current_supply);
+    event PropsMinted(
+        address indexed receiver,
+        uint256 amount,
+        uint256 timestamp,
+        uint256 current_supply
+    );
     event AdminChanged(address indexed new_admin, uint256 timestamp);
     event AdminRevoked(address indexed admin, uint256 timestamp);
     event MinterChanged(address indexed new_minter, uint256 timestamp);
     event LimiterChanged(address indexed new_limiter, uint256 timestamp);
-    event MintTrancheLimitSetup(address indexed minter, uint256 new_mint_tranche_limit, uint256 timestamp);
+    event TreasuryChanged(address indexed new_treasury, uint256 timestamp);
+    event MintTrancheLimitSetup(
+        address indexed minter,
+        uint256 new_mint_tranche_limit,
+        uint256 timestamp
+    );
 
     // constructor setting intial configurations
     constructor(uint256 mint_tranche) ERC20("Propbase", "PROPS") {
@@ -93,16 +102,23 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
     /// @dev Only MINTER_ROLE user can mint that to in specific delays and mint tranche limits per transaction.
     /// @param to receiver address of $PROPS
     /// @param amount receiver amount $PROPS
-    function mint(address to, uint256 amount)
-    public onlyRole(MINTER_ROLE) checkTrancheLimit(amount, mint_tranche_limit) checkDelay(last_mint_timestamp, MINT_DELAY){
+    function mint(
+        address to, // treasury and multi sign
+        uint256 amount
+    )
+        public
+        onlyRole(MINTER_ROLE)
+        checkTrancheLimit(amount, mint_tranche_limit)
+        checkDelay(last_mint_timestamp, MINT_DELAY)
+    {
         if (current_supply + amount > TOTAL_SUPPLY) {
             revert PROPS__MintCapReached(TOTAL_SUPPLY);
         }
         current_supply += amount;
         last_mint_timestamp = block.timestamp;
-        _mint(to, amount);
+        _mint(treasury, amount);
 
-        emit PropsMinted(to, amount, block.timestamp, current_supply);
+        emit PropsMinted(treasury, amount, block.timestamp, current_supply);
     }
 
     /// @notice gets decimals of $PROPS
@@ -114,8 +130,14 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
     /// @notice sets ADMIN_ROLE.
     /// @dev Only ADMIN_ROLE user can set ADMIN_ROLE and address should be Multisign.
     /// @param new_admin new ADMIN_ROLE user.
-    function changeAdmin(address new_admin)
-    external onlyRole(ADMIN_ROLE) isValidAddress(new_admin) isMultisignAddress(new_admin){
+    function changeAdmin(
+        address new_admin
+    )
+        external
+        onlyRole(ADMIN_ROLE)
+        isValidAddress(new_admin)
+        isMultisignAddress(new_admin)
+    {
         _grantRole(ADMIN_ROLE, new_admin);
         _revokeRole(ADMIN_ROLE, msg.sender);
         admin = new_admin;
@@ -126,8 +148,9 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
     /// @notice Revokes ADMIN_ROLE.
     /// @dev Only current ADMIN_ROLE user can revoke ADMIN_ROLE.
     /// @param user ADMIN_ROLE user to be revoked ADMIN_ROLE
-    function revokeAdmin(address user) 
-    external onlyRole(ADMIN_ROLE) isValidAddress(user) {
+    function revokeAdmin(
+        address user
+    ) external onlyRole(ADMIN_ROLE) isValidAddress(user) {
         _revokeRole(ADMIN_ROLE, user);
         admin = address(0);
 
@@ -137,8 +160,14 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
     /// @notice sets Minter.
     /// @dev Only ADMIN_ROLE user can set MINTER_ROLE and address should be Multisign.
     /// @param new_minter new MINTER_ROLE user.
-    function changeMinter(address new_minter)
-    external onlyRole(ADMIN_ROLE) isValidAddress(new_minter) isMultisignAddress(new_minter){
+    function changeMinter(
+        address new_minter
+    )
+        external
+        onlyRole(ADMIN_ROLE)
+        isValidAddress(new_minter)
+        isMultisignAddress(new_minter)
+    {
         _grantRole(MINTER_ROLE, new_minter);
         if (minter != address(0)) _revokeRole(MINTER_ROLE, minter);
         minter = new_minter;
@@ -149,8 +178,14 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
     /// @notice sets Limiter.
     /// @dev Only ADMIN_ROLE user can set LIMITER_ROLE and address should be Multisign.
     /// @param new_admin new LIMITER_ROLE user.
-    function changeLimiter(address new_admin)
-    external onlyRole(ADMIN_ROLE) isValidAddress(new_admin) isMultisignAddress(new_admin){
+    function changeLimiter(
+        address new_admin
+    )
+        external
+        onlyRole(ADMIN_ROLE)
+        isValidAddress(new_admin)
+        isMultisignAddress(new_admin)
+    {
         _grantRole(LIMITER_ROLE, new_admin);
         if (limiter != address(0)) _revokeRole(LIMITER_ROLE, limiter);
         limiter = new_admin;
@@ -158,13 +193,33 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
         emit LimiterChanged(new_admin, block.timestamp);
     }
 
+    /// @notice sets Treasury.
+    /// @dev Only ADMIN_ROLE user can set ADMIN_ROLE and address should be Multisign.
+    /// @param new_treasury new treasury user.
+    function changeTreasury(
+        address new_treasury
+    )
+        external
+        onlyRole(ADMIN_ROLE)
+        isValidAddress(new_treasury)
+        isMultisignAddress(new_treasury)
+    {
+        treasury = new_treasury;
+        emit TreasuryChanged(new_treasury, block.timestamp);
+    }
+
     /**
      * @notice sets MintTrancheLimit.
      * @dev Only MINTER_ROLE user can set MintTrancheLimit and limit should be less than max mint tranche max that to in specific delays.
      * @param limit new MintTrancheLimit limit.
      */
-    function setMintTrancheLimit(uint256 limit)
-    external onlyRole(LIMITER_ROLE) checkDelay(last_mint_tranche_timestamp, MINT_DELAY){
+    function setMintTrancheLimit(
+        uint256 limit
+    )
+        external
+        onlyRole(LIMITER_ROLE)
+        checkDelay(last_mint_tranche_timestamp, MINT_DELAY)
+    {
         if (limit > TOTAL_SUPPLY || limit > MINT_TRANCHE_MAX) {
             revert PROPS__MintTrancheLimitOutOfRange();
         }
