@@ -4,6 +4,7 @@ const { assert, expect } = require('chai');
 const { deployments, ethers, getNamedAccounts } = require('hardhat');
 const { developmentChains } = require('../helper-hardhat-config');
 const { time } = require('@nomicfoundation/hardhat-network-helpers');
+const { isAwaitExpression } = require('typescript');
 //writing the test code from here..
 
 !developmentChains.includes(network.name)
@@ -511,20 +512,40 @@ const { time } = require('@nomicfoundation/hardhat-network-helpers');
             );
 
           assert(hasMinterRole);
+          assert(hasLimiterRole);
           assert(!hasAdminRole);
+
+          for (let i = 0; i < 4; i++) {
+            await test
+            .connect(deployer)
+            .mint(address1.address, ethers.parseUnits('2000000', 8));
+
+            const current_timestamp = await time.latest();
+            let mint_timestamp = await props.last_mint_timestamp()
+
+            assert.equal(current_timestamp, mint_timestamp);
+            await ethers.provider.send('evm_increaseTime', [172801]);
+            await ethers.provider.send('evm_mine');
+
+          }
+
+          let current_supply = await props.current_supply();
+          assert.equal(current_supply, ethers.parseUnits('8000000', 8));
+
           await test
             .connect(deployer)
             .setMintTrancheLimit(ethers.parseUnits('1000000', 8));
+          
+          const current_timestamp = await time.latest();
+
+          let mint_tranche_timestamp = await props.last_mint_tranche_timestamp()
+          assert.equal(ethers.toBigInt(current_timestamp), mint_tranche_timestamp);
 
           const data = await props.mint_tranche_limit();
           assert.equal(data, ethers.parseUnits('1000000', 8));
 
-          await test
-          .connect(deployer)
-          .mint(address1.address, ethers.parseUnits('1000000', 8));
-
           let address_1_bal = await props.balanceOf(address1.address);
-          assert.equal(address_1_bal.toString(), '100000000000000');
+          assert.equal(address_1_bal.toString(), '800000000000000');
         });
       });
     });
