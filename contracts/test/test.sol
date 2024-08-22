@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 
 import "../props_evm.sol";
 
+// This contract is used to mimick the multisign address as the multisign must always be a contract
 contract TEST {
     PROPS private props_coin;
 
