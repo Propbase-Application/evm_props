@@ -1,6 +1,6 @@
 # EVM $PROPS
 
-This project is implementation of $PROPS coin in evm. $PROPS coin is the native utility coin of Propbase, a global power in driving real world property assets in blockchain. Propbase is a blockchain based tokenized property transaction marketplace for investment properties headquartered in South East Asia. The Props utility token powers the circular economy on Propbase and enables users to freely interact with close to zero fees.
+This project is implementation of $PROPS coin in evm. $PROPS coin is the native utility coin of Propbase, a global power in driving real world property assets in blockchain. Propbase is a blockchain based tokenized property transaction marketplace for investment properties headquartered in South East Asia. The $PROPS utility token powers the circular economy on Propbase and enables users to freely interact with close to zero fees.
 
 # Docs
 
