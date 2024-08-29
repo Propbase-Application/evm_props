@@ -57,7 +57,7 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
     constructor(uint256 mint_tranche) ERC20("Propbase", "PROPS") {
         mint_tranche_limit = mint_tranche;
         admin = msg.sender;
-        _setupRole(ADMIN_ROLE, msg.sender);
+        _grantRole(ADMIN_ROLE, msg.sender);
     }
 
     // Checks if address is non zero address
