@@ -45,6 +45,7 @@ contract PROPS is ERC20, ERC20Burnable, AccessControl {
     // Constructor setting initial configurations
     constructor(uint256 mint_tranche) ERC20("Propbase", "PROPS") {
         mint_tranche_limit = mint_tranche;
+        // All addresses are Safe Multi-Sign addresses
         address minter = 0x6b9a6477df9B96ddA4CDf686845612998A1F8825;
         address limiter = 0x6b9a6477df9B96ddA4CDf686845612998A1F8825;
         treasury = 0x6b9a6477df9B96ddA4CDf686845612998A1F8825;
