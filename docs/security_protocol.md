@@ -7,21 +7,15 @@ Role based approach is being implemented for ensuring greater security.
 
 ## Security Measures
 
-### Role Based controls
+### Address Based controls
 
-For distributing the control of evm props we have 3 roles that control overall flow of the props contract namely
+**MINTER_ADDRESS**
 
-**ADMIN_ROLE**
+- MINTER_ADDRESS user is set by DEPLOYER by hardcoding and it will set MULTISIGN wallet and this user can only mint $PROPS to a multisign treasury wallet hardcoded in code.
 
-- Admin role is the role which get assigned on the initial deployment itself where the deployer who is initially single sign wallet will be ADMIN_ROLE user. Admin role user need to set MINTER_ROLE and LIMITER_ROLE as MULTISIGN safe_wallet. Admin role user can change the admin only to a multisign wallet after the initial deployment. Admin role user can call REVOKE_ADMIN to renounce admin role.
+**LIMITER_ADDRESS**
 
-**MINTER_ROLE**
-
-- MINTER_ROLE user is set by ADMIN_ROLE user and it can be only a MULTISIGN wallet and this user can only mint $PROPS to a multisign treasury wallet with the constraints.
-
-**LIMITER_ROLE**
-
-- LIMITER_ROLE is set by admin initially and it can be only a MULTISIGN wallet. This wallet is responsible to set tranche_limit per minting props per transaction.
+- LIMITER_ADDRESS is set by DEPLOYER by hardcoding and it will set MULTISIGN wallet. This wallet is responsible to set tranche_limit per minting props per transaction.
 
 ### Constraints
 
@@ -40,4 +34,4 @@ For distributing the control of evm props we have 3 roles that control overall f
 
 **Mint only to Treasury**
 
-- Minter can send minted PROPS to an address predefined as treasury which must be a multisign address set by admin.
+- Minter can send minted PROPS to an address predefined as treasury which must be a multisign address set by deployer.
