@@ -11,7 +11,6 @@ const { time } = require('@nomicfoundation/hardhat-network-helpers');
   : describe('PROPS TESTS', function () {
       let props,
         deployer,
-        multiSignaddress,
         treasurySigner,
         minterSigner,
         limiterSigner,
@@ -290,7 +289,6 @@ const { time } = require('@nomicfoundation/hardhat-network-helpers');
 describe('Full Flow Test 2', function () {
   let props,
     deployer,
-    multiSignaddress,
     treasurySigner,
     minterSigner,
     limiterSigner,
