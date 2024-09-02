@@ -86,12 +86,36 @@ const { time } = require('@nomicfoundation/hardhat-network-helpers');
 
       describe('setMintTrancheLimit', function () {
         it('Sets MintTrancheLimit correctly.', async () => {
+          const timestamp = await time.latest();
           await props
             .connect(limiterSigner)
             .setMintTrancheLimit(ethers.parseUnits('5', 8));
 
           const data = await props.mint_tranche_limit();
           assert.equal(data, ethers.toBigInt('500000000'));
+
+          const last_mint_tranche_timestamp =
+            await props.last_mint_tranche_timestamp();
+          assert.isAbove(last_mint_tranche_timestamp, timestamp);
+        });
+
+        it('Sets MintTrancheLimit again after 2 days.', async () => {
+          const timestamp = await time.latest();
+          await props
+            .connect(limiterSigner)
+            .setMintTrancheLimit(ethers.parseUnits('5', 8));
+
+          const data_1 = await props.mint_tranche_limit();
+          assert.equal(data_1, ethers.toBigInt('500000000'));
+
+          await time.increase(172801);
+
+          await props
+            .connect(limiterSigner)
+            .setMintTrancheLimit(ethers.parseUnits('6', 8));
+
+          const data_2 = await props.mint_tranche_limit();
+          assert.equal(data_2, ethers.toBigInt('600000000'));
         });
 
         it('Emits MintTrancheLimitSetup on MintTrancheLimit correctly.', async () => {
@@ -102,7 +126,11 @@ const { time } = require('@nomicfoundation/hardhat-network-helpers');
               .setMintTrancheLimit(ethers.parseUnits('5', 8))
           )
             .to.emit(props, 'MintTrancheLimitSetup')
-            .withArgs(limiter, ethers.parseUnits('5', 8), timestamp + 1);
+            .withArgs(
+              limiter,
+              ethers.parseUnits('5', 8),
+              await props.last_mint_tranche_timestamp()
+            );
         });
 
         it('only limiter role can set MintTrancheLimit ', async () => {
@@ -182,6 +210,26 @@ const { time } = require('@nomicfoundation/hardhat-network-helpers');
           assert.equal(current_supply, ethers.toBigInt('1000000000000'));
         });
 
+        it('mint props again after 2 days.', async () => {
+          await props.connect(minterSigner).mint(1000000000000);
+
+          let address_1_bal_1 = await props.balanceOf(treasury);
+          assert.equal(address_1_bal_1.toString(), '1000000000000');
+
+          const current_supply_1 = await props.current_supply();
+          assert.equal(current_supply_1, ethers.toBigInt('1000000000000'));
+
+          await time.increase(172801);
+
+          await props.connect(minterSigner).mint(1000000000000);
+
+          let address_1_bal_2 = await props.balanceOf(treasury);
+          assert.equal(address_1_bal_2.toString(), '2000000000000');
+
+          const current_supply_2 = await props.current_supply();
+          assert.equal(current_supply_2, ethers.toBigInt('2000000000000'));
+        });
+
         it('only minter can mint props.', async () => {
           await expect(
             props.connect(deployer).mint(1000000000000)
@@ -241,7 +289,7 @@ const { time } = require('@nomicfoundation/hardhat-network-helpers');
               minter,
               treasury,
               ethers.parseUnits('10000', 8),
-              timestamp + 5,
+              await props.last_mint_timestamp(),
               await props.current_supply()
             );
         });
@@ -250,14 +298,14 @@ const { time } = require('@nomicfoundation/hardhat-network-helpers');
       describe('Full Flow Test', function () {
         it('All functions works properly together.', async () => {
           for (let i = 0; i < 4; i++) {
+            const current_timestamp = await time.latest();
             await props
               .connect(minterSigner)
               .mint(ethers.parseUnits('2000000', 8));
 
-            const current_timestamp = await time.latest();
             let mint_timestamp = await props.last_mint_timestamp();
 
-            assert.equal(current_timestamp, mint_timestamp);
+            assert.isAbove(mint_timestamp, current_timestamp);
             await ethers.provider.send('evm_increaseTime', [172801]);
             await ethers.provider.send('evm_mine');
           }
@@ -370,5 +418,12 @@ describe('Full Flow Test 2', function () {
 
     let address_1_bal = await props.balanceOf(treasury);
     assert.equal(address_1_bal.toString(), '1500000000000000');
+
+    await time.increase(172801);
+
+    await props.connect(minterSigner).mint(ethers.parseUnits('1000000', 8));
+
+    let treasury_bal = await props.balanceOf(treasury);
+    assert.equal(treasury_bal.toString(), '1600000000000000');
   });
 });
