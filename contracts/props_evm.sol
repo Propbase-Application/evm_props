@@ -71,7 +71,7 @@ contract PROPS is ERC20, ERC20Burnable {
         _;
     }
 
-    /// @notice Mints the specific amount of tokens
+    /// @notice Mint the specific amount of tokens
     /// @dev Only MINTER user can mint coins in tranches and in specific frequency.
     /// @param amount $PROPS coin amount
     function mint(

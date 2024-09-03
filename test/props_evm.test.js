@@ -466,5 +466,4 @@ describe('Full Flow Test 2', function () {
     let treasury_bal = await props.balanceOf(treasury);
     assert.equal(treasury_bal.toString(), '1600000000000000');
   });
-
 })
