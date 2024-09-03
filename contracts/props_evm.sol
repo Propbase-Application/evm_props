@@ -18,7 +18,7 @@ error PROPS__MintTrancheLimitOutOfRange();
 /// @author Propbase
 /// @notice You can use this contract for deploying $PROPS on evm
 contract PROPS is ERC20, ERC20Burnable {
-    uint256 public constant TOTAL_SUPPLY = 120000000000000000; // Maximum supply 1.2 billion $PROPS
+    uint256 public constant MAX_SUPPLY = 120000000000000000; // Maximum supply 1.2 billion $PROPS
     uint256 private constant MINT_TRANCHE_MAX = 100000000000000; // Limit of mint tranche limit 1 million
     uint256 private constant MINT_DELAY = 172800; // Delay of 2 days per mint
     uint256 public current_supply = 0; // Current supply
@@ -85,8 +85,8 @@ contract PROPS is ERC20, ERC20Burnable {
         if (msg.sender != MINTER) {
             revert PROPS__NOT_ATHOURISED();
         }
-        if (current_supply + amount > TOTAL_SUPPLY) {
-            revert PROPS__MintCapReached(TOTAL_SUPPLY);
+        if (current_supply + amount > MAX_SUPPLY) {
+            revert PROPS__MintCapReached(MAX_SUPPLY);
         }
         current_supply += amount;
         last_mint_timestamp = block.timestamp;
@@ -117,7 +117,7 @@ contract PROPS is ERC20, ERC20Burnable {
         if (msg.sender != LIMITER) {
             revert PROPS__NOT_ATHOURISED();
         }
-        if (limit > TOTAL_SUPPLY || limit > MINT_TRANCHE_MAX) {
+        if (limit > MAX_SUPPLY || limit > MINT_TRANCHE_MAX) {
             revert PROPS__MintTrancheLimitOutOfRange();
         }
         last_mint_tranche_timestamp = block.timestamp;
