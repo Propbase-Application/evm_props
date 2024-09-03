@@ -353,6 +353,24 @@ const { time } = require('@nomicfoundation/hardhat-network-helpers');
               let current_supply_after_burn = await props.totalSupply();
               assert.equal(current_supply_after_burn.toString(),"100000000000000")
         });
+
+        it('Burn function cant burn from other wallets', async () => {
+          const current_timestamp = await time.latest();
+          await props
+            .connect(minterSigner)
+            .mint(ethers.parseUnits('2000000', 8));
+
+          let mint_timestamp = await props.last_mint_timestamp();
+
+          assert.isAbove(mint_timestamp, current_timestamp);
+          let current_supply = await props.totalSupply();
+          assert.equal(current_supply.toString(),"200000000000000")
+
+          await expect ( props
+            .connect(limiterSigner)
+            .burnFrom(treasurySigner.address, ethers.parseUnits('1000000', 8))       
+          ).to.be.revertedWith('ERC20: insufficient allowance');
+      });
       });
   });
 
