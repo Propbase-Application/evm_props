@@ -154,7 +154,7 @@ const { time } = require('@nomicfoundation/hardhat-network-helpers');
           );
         });
 
-        it("can't set MintTrancheLimit > min_tranche_limit.", async () => {
+        it("can't set MintTrancheLimit > max tranche limit.", async () => {
           await expect(
             props
               .connect(limiterSigner)
