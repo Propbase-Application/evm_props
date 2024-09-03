@@ -21,7 +21,6 @@ contract PROPS is ERC20, ERC20Burnable {
     uint256 public constant TOTAL_SUPPLY = 120000000000000000; // Maximum supply 1.2 billion $PROPS
     uint256 private constant MINT_TRANCHE_MAX = 100000000000000; // Limit of mint tranche limit 1 million
     uint256 private constant MINT_DELAY = 172800; // Delay of 2 days per mint
-    uint256 public current_supply = 0; // Current supply
     uint256 public mint_tranche_limit = 0; // Minting limit per mint call
     uint256 public last_mint_timestamp = 0; // Variable tracking last mint timestamp
     uint256 public last_mint_tranche_timestamp = 0; // Variable tracking last mint tranche set timestamp
@@ -85,10 +84,9 @@ contract PROPS is ERC20, ERC20Burnable {
         if (msg.sender != MINTER) {
             revert PROPS__NOT_ATHOURISED();
         }
-        if (current_supply + amount > TOTAL_SUPPLY) {
+        if (totalSupply() + amount > TOTAL_SUPPLY) {
             revert PROPS__MintCapReached(TOTAL_SUPPLY);
         }
-        current_supply += amount;
         last_mint_timestamp = block.timestamp;
         _mint(TREASURY, amount);
         emit PropsMinted(
@@ -96,7 +94,7 @@ contract PROPS is ERC20, ERC20Burnable {
             TREASURY,
             amount,
             block.timestamp,
-            current_supply
+            totalSupply()
         );
     }
 
