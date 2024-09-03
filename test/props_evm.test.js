@@ -69,7 +69,7 @@ const { time } = require('@nomicfoundation/hardhat-network-helpers');
 
       describe('Basic Functionality Test', function () {
         it('Initializes the PROPS Correctly.', async () => {
-          const current_supply = await props.current_supply();
+          const current_supply = await props.totalSupply();
           assert.equal(current_supply, ethers.toBigInt('0'));
           const mint_tranche_limit = await props.mint_tranche_limit();
           assert.equal(mint_tranche_limit, ethers.toBigInt('200000000000000'));
@@ -206,7 +206,7 @@ const { time } = require('@nomicfoundation/hardhat-network-helpers');
           let address_1_bal = await props.balanceOf(treasury);
           assert.equal(address_1_bal.toString(), '1000000000000');
 
-          const current_supply = await props.current_supply();
+          const current_supply = await props.totalSupply();
           assert.equal(current_supply, ethers.toBigInt('1000000000000'));
         });
 
@@ -216,7 +216,7 @@ const { time } = require('@nomicfoundation/hardhat-network-helpers');
           let address_1_bal_1 = await props.balanceOf(treasury);
           assert.equal(address_1_bal_1.toString(), '1000000000000');
 
-          const current_supply_1 = await props.current_supply();
+          const current_supply_1 = await props.totalSupply();
           assert.equal(current_supply_1, ethers.toBigInt('1000000000000'));
 
           await time.increase(172801);
@@ -226,7 +226,7 @@ const { time } = require('@nomicfoundation/hardhat-network-helpers');
           let address_1_bal_2 = await props.balanceOf(treasury);
           assert.equal(address_1_bal_2.toString(), '2000000000000');
 
-          const current_supply_2 = await props.current_supply();
+          const current_supply_2 = await props.totalSupply();
           assert.equal(current_supply_2, ethers.toBigInt('2000000000000'));
         });
 
@@ -290,7 +290,7 @@ const { time } = require('@nomicfoundation/hardhat-network-helpers');
               treasury,
               ethers.parseUnits('10000', 8),
               await props.last_mint_timestamp(),
-              await props.current_supply()
+              await props.totalSupply()
             );
         });
       });
@@ -310,7 +310,7 @@ const { time } = require('@nomicfoundation/hardhat-network-helpers');
             await ethers.provider.send('evm_mine');
           }
 
-          let current_supply = await props.current_supply();
+          let current_supply = await props.totalSupply();
           assert.equal(current_supply, ethers.parseUnits('8000000', 8));
 
           await props
@@ -333,7 +333,47 @@ const { time } = require('@nomicfoundation/hardhat-network-helpers');
           assert.equal(address_1_bal.toString(), '800000000000000');
         });
       });
-    });
+
+      describe('Erc20 Burn Test', function () {
+        it('Burn function reduces totalSupply.', async () => {
+            const current_timestamp = await time.latest();
+            await props
+              .connect(minterSigner)
+              .mint(ethers.parseUnits('2000000', 8));
+
+            let mint_timestamp = await props.last_mint_timestamp();
+
+            assert.isAbove(mint_timestamp, current_timestamp);
+            let current_supply = await props.totalSupply();
+            assert.equal(current_supply.toString(),"200000000000000")
+
+            await props
+              .connect(treasurySigner)
+              .burn(ethers.parseUnits('1000000', 8));            
+              let current_supply_after_burn = await props.totalSupply();
+              assert.equal(current_supply_after_burn.toString(),"100000000000000")
+        });
+
+        it('Burn function cant burn from other wallets', async () => {
+          const current_timestamp = await time.latest();
+          await props
+            .connect(minterSigner)
+            .mint(ethers.parseUnits('2000000', 8));
+
+          let mint_timestamp = await props.last_mint_timestamp();
+
+          assert.isAbove(mint_timestamp, current_timestamp);
+          let current_supply = await props.totalSupply();
+          assert.equal(current_supply.toString(),"200000000000000")
+
+          await expect ( props
+            .connect(limiterSigner)
+            .burnFrom(treasurySigner.address, ethers.parseUnits('1000000', 8))       
+          ).to.be.revertedWith('ERC20: insufficient allowance');
+      });
+      });
+  });
+
 describe('Full Flow Test 2', function () {
   let props,
     deployer,
@@ -401,7 +441,7 @@ describe('Full Flow Test 2', function () {
 
     assert.equal(current_timestamp, mint_timestamp);
 
-    let current_supply = await props.current_supply();
+    let current_supply = await props.totalSupply();
     assert.equal(current_supply, ethers.parseUnits('15000000', 8));
 
     await props
@@ -426,4 +466,4 @@ describe('Full Flow Test 2', function () {
     let treasury_bal = await props.balanceOf(treasury);
     assert.equal(treasury_bal.toString(), '1600000000000000');
   });
-});
+})
