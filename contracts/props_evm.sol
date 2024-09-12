@@ -5,7 +5,7 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 
-error PROPS__NOT_ATHOURISED();
+error PROPS__NOT_AUTHOURISED();
 error PROPS__MintCapReached(uint256 limit);
 error PROPS__AmountTrancheLimitReached();
 error PROPS__FrequencyTimeLimitNotReached(
@@ -82,7 +82,7 @@ contract PROPS is ERC20, ERC20Burnable {
         checkDelay(last_mint_timestamp, MINT_DELAY)
     {
         if (msg.sender != MINTER) {
-            revert PROPS__NOT_ATHOURISED();
+            revert PROPS__NOT_AUTHOURISED();
         }
         if (totalSupply() + amount > MAX_SUPPLY) {
             revert PROPS__MintCapReached(MAX_SUPPLY);
@@ -113,7 +113,7 @@ contract PROPS is ERC20, ERC20Burnable {
         uint256 limit
     ) external checkDelay(last_mint_tranche_timestamp, MINT_DELAY) {
         if (msg.sender != LIMITER) {
-            revert PROPS__NOT_ATHOURISED();
+            revert PROPS__NOT_AUTHOURISED();
         }
         if (limit > MAX_SUPPLY || limit > MINT_TRANCHE_MAX) {
             revert PROPS__MintTrancheLimitOutOfRange();
