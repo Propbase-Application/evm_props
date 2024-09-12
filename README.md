@@ -17,6 +17,7 @@ To run this project, you will need to copy the items from the `.env.example` to 
 select the latest stable node version in terminal via nvm
 
 ```
+nvm use 20.17.0
 npm install
 ```
 

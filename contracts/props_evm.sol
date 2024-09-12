@@ -19,7 +19,7 @@ error PROPS__MintTrancheLimitOutOfRange();
 /// @notice You can use this contract for deploying $PROPS on evm
 contract PROPS is ERC20, ERC20Burnable {
     uint256 public constant MAX_SUPPLY = 120000000000000000; // Maximum supply 1.2 billion $PROPS
-    uint256 private constant MINT_TRANCHE_MAX = 100000000000000; // Limit of mint tranche limit 1 million
+    uint256 private constant MINT_TRANCHE_MAX = 200000000000000; // Limit of mint tranche limit 1 million
     uint256 private constant MINT_DELAY = 172800; // Delay of 2 days per mint
     uint256 public mint_tranche_limit = 0; // Minting limit per mint call
     uint256 public last_mint_timestamp = 0; // Variable tracking last mint timestamp
@@ -27,11 +27,11 @@ contract PROPS is ERC20, ERC20Burnable {
 
     // All addresses are Safe Multi-Sign addresses
     address private constant MINTER =
-        0x401518a18849185b49097EeAf5690f6825190068;
+        0xfC85e87b38B7d2E2fBc29AE40f57c4928E22D4F0;
     address private constant LIMITER =
-        0xAF48d53c8b33A98390Fa52A906fD57Fad7B84a5E;
+        0xa0305f4599A5519651435A70810B205c648799a1;
     address private constant TREASURY =
-        0x068121C6be050Cd9a20105d9133FE26ab3971b46;
+        0x43b6EaA9DF444177f1d41da6fd4A5FbB45b7E781;
 
     event PropsMinted(
         address indexed sender,
