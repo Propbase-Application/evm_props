@@ -87,7 +87,7 @@ module.exports = {
       bscTestnet: process.env.BNB_SCAN_API_KEY,
       base_chain_sepolia: process.env.BASE_CHAIN_SEPOLIA_API_KEY,
       baseSepolia: process.env.BASE_CHAIN_SEPOLIA_API_KEY,
-      base_chain_mainnet: process.env.BASE_CHAIN_MAINNET_API_KEY,
+      base: process.env.BASE_CHAIN_MAINNET_API_KEY,
     },
     customChains: [],
   },
