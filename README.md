@@ -71,8 +71,14 @@ The contract gets deployed and is verified in the network explorer.
 npx hardhat deploy --network baseSepolia
 ```
 
-## Mainnet Deployment
+## Base Mainnet Deployment
 
 ```
 npx hardhat deploy --network base_chain_mainnet
+```
+
+## ETH Mainnet Deployment
+
+```
+npx hardhat deploy --network eth_chain_mainnet
 ```
