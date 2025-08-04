@@ -1,0 +1,5 @@
+1. check deploy/00-props.js to update mint tranche limit that is amount of props can mint per tranche(DEFAULTS 2 DAYS)
+2. check contracts/props_evm.sol LINE 30,32,34 to update MINTER, LIMITER and TREASURY addresses
+3. Deploy props contract - from README.md
+4. use props contract to mint props to treasury address 
+5. use setMintTrancheLimit to set tranche limit for props per 2 days 
