@@ -12,6 +12,8 @@ This project is implementation of $PROPS coin in evm. $PROPS coin is the native 
 
 To run this project, you will need to copy the items from the `.env.example` to `.env` file and fill up the values. Take precaution in not to expose the private keys in the .env file.
 
+For Robinhood Chain, `BLOCKSCOUT_API_KEY_ROBINHOOD` is a free Blockscout API key from [https://dev.blockscout.com/](https://dev.blockscout.com/). It is required for verification because `https://robinhoodchain.blockscout.com/api` rejects non-browser clients (Cloudflare challenge), so verification goes through Blockscout's keyed API gateway. `ROBINHOOD_CHAIN_MAINNET_RPC` is optional and falls back to the public RPC.
+
 ## Install packages:
 
 select the latest stable node version in terminal via nvm
@@ -81,4 +83,18 @@ npx hardhat deploy --network base_chain_mainnet
 
 ```
 npx hardhat deploy --network eth_chain_mainnet
+```
+
+## Robinhood Chain Mainnet Deployment
+
+Chain id `4663`. Explorer: [https://robinhoodchain.blockscout.com/](https://robinhoodchain.blockscout.com/). Set `BLOCKSCOUT_API_KEY_ROBINHOOD` in `.env` first so the contract is verified on Blockscout after deployment.
+
+```
+npx hardhat deploy --network robinhood_chain_mainnet
+```
+
+To verify manually later:
+
+```
+npx hardhat verify --network robinhood_chain_mainnet <contract_address> 1000000000000000
 ```

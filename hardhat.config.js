@@ -47,6 +47,15 @@ module.exports = {
       chainId: 1,
       accounts: [PRIVATE_KEY],
     },
+    // Robinhood Chain mainnet (Arbitrum-stack L2). Explorer: https://robinhoodchain.blockscout.com/
+    // Gas price there is ~0.02 gwei, so it is left to the provider rather than pinned.
+    robinhood_chain_mainnet: {
+      url:
+        process.env.ROBINHOOD_CHAIN_MAINNET_RPC ||
+        "https://rpc.mainnet.chain.robinhood.com",
+      chainId: 4663,
+      accounts: [PRIVATE_KEY],
+    },
   },
   solidity: {
     compilers: [
@@ -94,8 +103,21 @@ module.exports = {
       base_chain_sepolia: process.env.BASE_CHAIN_SEPOLIA_API_KEY,
       baseSepolia: process.env.BASE_CHAIN_SEPOLIA_API_KEY,
       base: process.env.BASE_CHAIN_MAINNET_API_KEY,
+      // Blockscout API key (free, from https://dev.blockscout.com/). Requests without a key are rejected.
+      robinhood_chain_mainnet: process.env.BLOCKSCOUT_API_KEY_ROBINHOOD,
     },
-    customChains: [],
+    customChains: [
+      {
+        network: "robinhood_chain_mainnet",
+        chainId: 4663,
+        urls: {
+          // https://robinhoodchain.blockscout.com/api sits behind a Cloudflare challenge that
+          // rejects non-browser clients, so verification goes through Blockscout's keyed API gateway.
+          apiURL: "https://api.blockscout.com/4663/api",
+          browserURL: "https://robinhoodchain.blockscout.com",
+        },
+      },
+    ],
   },
   gasReporter: {
     enabled: true,
